@@ -4,13 +4,28 @@ A Swift SDK for [Pocketbase](https://pocketbase.io/) v0.28.2.
 
 > Note: This is a work in progress. The SDK is not yet complete.
 
+## Features
+
+- ✅ Generic user authentication (supports any model)
+- ✅ User authentication (sign up, sign in, sign out)
+- ✅ Token refresh
+- ✅ Password reset
+- ✅ CRUD operations
+- ✅ Realtime subscriptions
+- ✅ Type-safe data models
+- ✅ Automatic token management (stores tokens securely)
+
+## Motivation
+
+Pocketbase is a great framework for quick prototyping. In an ideal world, Pocketbase would generate Swagger/OpenAPI documentation, but it doesn't. This SDK aims to make it easier to use Pocketbase with Swift projects.
+
 ## Installation
 
 Add the package to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/your-username/pocketbase-swift-sdk.git", from: "1.0.0")
+    .package(url: "https://github.com/drewalth/pocketbase-swift-sdk.git", from: "1.0.0")
 ]
 ```
 
@@ -24,7 +39,7 @@ let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
 ### Data Models
 
-The SDK uses generics to support any user model that conforms to `PBIdentifiableCollection`. You need to define your own User and Admin models:
+The SDK uses generics to support any user model that conforms to `PBIdentifiableCollection`. You need to define your own User models:
 
 ```swift
 // Define your User model
@@ -41,16 +56,6 @@ struct User: PBIdentifiableCollection {
     let collectionName: String
     // Add any additional fields your PocketBase user collection has
 }
-
-// Define your Admin model
-struct Admin: PBIdentifiableCollection {
-    let id: String
-    let email: String
-    let avatar: String?
-    let created: String
-    let updated: String
-    // Add any additional fields your PocketBase admin collection has
-}
 ```
 
 ### Authentication
@@ -61,25 +66,16 @@ The SDK provides comprehensive authentication functionality with generic support
 
 ```swift
 // Sign up a new user
-let authResult = try await pb.signUp(
-    email: "user@example.com",
+let createUserDto = CreateUser(
+    email: "new@drewalth.com",
+    name: "Test User",
     password: "password123",
-    passwordConfirm: "password123",
-    username: "username",
-    name: "John Doe",
-    userType: User.self
-)
+    passwordConfirm: "password123")
+let authResult = try await pb.signUp(dto: createUserDto, userType: User.self)
 
 // Sign in with email/username and password
 let authResult = try await pb.authWithPassword(
     email: "user@example.com",
-    password: "password123",
-    userType: User.self
-)
-
-// Or sign in with username
-let authResult = try await pb.authWithPassword(
-    username: "username",
     password: "password123",
     userType: User.self
 )
@@ -95,26 +91,6 @@ if pb.isAuthenticated {
 
 // Sign out
 pb.signOut()
-```
-
-#### Admin Authentication
-
-```swift
-// Sign in as admin
-let adminAuth = try await pb.authWithPassword(
-    email: "admin@example.com",
-    password: "adminpassword",
-    adminType: Admin.self
-)
-
-// Refresh admin token
-let adminRefresh = try await pb.authRefreshAdmin(adminType: Admin.self)
-
-// Check admin authentication status
-if pb.isAdminAuthenticated {
-    print("Admin is authenticated")
-    print("Admin ID: \(pb.currentAdminId ?? "Unknown")")
-}
 ```
 
 #### Password Reset and Email Verification
@@ -135,16 +111,6 @@ try await pb.requestVerification(email: "user@example.com")
 
 // Confirm email verification (with token from email)
 try await pb.confirmVerification(token: "verification_token_from_email")
-```
-
-#### Authentication Methods
-
-```swift
-// Get available authentication methods
-let authMethods = try await pb.getAuthMethods()
-print("Username/Password enabled: \(authMethods.usernamePassword)")
-print("Email/Password enabled: \(authMethods.emailPassword)")
-print("Auth providers: \(authMethods.authProviders)")
 ```
 
 ### CRUD Operations
@@ -226,15 +192,3 @@ struct User: PBIdentifiableCollection {
 }
 ```
 
-## Features
-
-- ✅ Generic user and admin authentication (supports any model)
-- ✅ User authentication (sign up, sign in, sign out)
-- ✅ Admin authentication
-- ✅ Token refresh
-- ✅ Password reset
-- ✅ Email verification
-- ✅ CRUD operations
-- ✅ Realtime subscriptions
-- ✅ Type-safe data models
-- ✅ Automatic token management
