@@ -8,24 +8,6 @@
 import Testing
 @testable import PocketBase
 
-// MARK: - TestRecord
-
-struct TestRecord: Decodable, Encodable, Sendable {
-  let id: String?
-  let name: String
-  let description: String?
-  let created: String?
-  let updated: String?
-
-  init(id: String? = nil, name: String, description: String? = nil) {
-    self.id = id
-    self.name = name
-    self.description = description
-    created = nil
-    updated = nil
-  }
-}
-
 // MARK: - CRUD Tests
 
 @Test
@@ -33,86 +15,88 @@ func crud_basic_operations() async throws {
   let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
   // Create a new record
-  let newRecord = TestRecord(name: "Test Record", description: "This is a test record")
-  let createdRecord = try await pb.create(collection: "test_collection", record: newRecord)
+  let newRecord = CreatePost(title: "Test Record")
+  let createdRecord = try await pb.create(collection: "posts", record: newRecord, output: Post.self)
 
-  #expect(createdRecord.id != nil)
-  #expect(createdRecord.name == "Test Record")
+  #expect(createdRecord.id != "")
+  #expect(createdRecord.title == "Test Record")
 
   // Read the created record
   let retrievedRecord = try await pb.getOne(
-    id: createdRecord.id!,
-    collection: "test_collection",
-    model: TestRecord.self)
+    id: createdRecord.id,
+    collection: "posts",
+    model: Post.self)
 
   #expect(retrievedRecord.id == createdRecord.id)
-  #expect(retrievedRecord.name == createdRecord.name)
+  #expect(retrievedRecord.title == createdRecord.title)
 
   // Update the record
-  let updatedRecord = TestRecord(
+  let updatedRecord = Post(
     id: createdRecord.id,
-    name: "Updated Test Record",
-    description: "This is an updated test record")
+    title: "Updated Test Record",
+    created: createdRecord.created,
+    updated: createdRecord.updated)
 
   let patchedRecord = try await pb.update(
-    collection: "test_collection",
-    id: createdRecord.id!,
+    collection: "posts",
+    id: createdRecord.id,
     record: updatedRecord)
 
-  #expect(patchedRecord.name == "Updated Test Record")
+  #expect(patchedRecord.title == "Updated Test Record")
 
   // Delete the record
-  try await pb.delete(collection: "test_collection", id: createdRecord.id!)
+//  try await pb.delete(collection: "posts", id: createdRecord.id)
 }
 
 @Test
 func crud_fluent_api() async throws {
   let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
-  let testCollection: Collection<TestRecord> = pb.collection("test_collection")
+  let posts: Collection<Post> = pb.collection("posts")
 
   // Create a new record using fluent API
-  let newRecord = TestRecord(name: "Fluent Test Record", description: "Created via fluent API")
-  let createdRecord = try await testCollection.create(record: newRecord)
+  let newRecord = CreatePost(title: "Fluent Test Record")
+  let createdRecord = try await posts.create(record: newRecord, output: Post.self)
 
-  #expect(createdRecord.id != nil)
-  #expect(createdRecord.name == "Fluent Test Record")
+  #expect(createdRecord.id != "")
+  #expect(createdRecord.title == "Fluent Test Record")
 
   // Read the created record
-  let retrievedRecord = try await testCollection.getOne(id: createdRecord.id!)
+  let retrievedRecord = try await posts.getOne(id: createdRecord.id)
   #expect(retrievedRecord.id == createdRecord.id)
 
   // Update the record
-  let updatedRecord = TestRecord(
+  let updatedRecord = Post(
     id: createdRecord.id,
-    name: "Updated Fluent Record",
-    description: "Updated via fluent API")
+    title: "Updated Fluent Record",
+    created: createdRecord.created,
+    updated: createdRecord.updated)
 
-  let patchedRecord = try await testCollection.update(id: createdRecord.id!, record: updatedRecord)
-  #expect(patchedRecord.name == "Updated Fluent Record")
+  let patchedRecord = try await posts.update(id: createdRecord.id, record: updatedRecord)
+  #expect(patchedRecord.title == "Updated Fluent Record")
 
   // Delete the record
-  try await testCollection.delete(id: createdRecord.id!)
+  try await posts.delete(id: createdRecord.id)
 }
 
 @Test
 func crud_list_operations() async throws {
   let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
-  let testCollection: Collection<TestRecord> = pb.collection("test_collection")
+  let posts: Collection<Post> = pb.collection("posts")
 
   // Create multiple records
-  let record1 = TestRecord(name: "Record 1", description: "First test record")
-  let record2 = TestRecord(name: "Record 2", description: "Second test record")
+  let record1 = CreatePost(title: "Record 1")
+  let record2 = CreatePost(title: "Record 2")
 
-  let created1 = try await testCollection.create(record: record1)
-  let created2 = try await testCollection.create(record: record2)
+  let created1 = try await posts.create(record: record1, output: Post.self)
+  let created2 = try await posts.create(record: record2, output: Post.self)
 
   // Get list of records
-  let records = try await testCollection.getList(perPage: 10)
+  let records = try await posts.getList(perPage: 10)
   #expect(records.items.count >= 2)
 
   // Clean up
-  try await testCollection.delete(id: created1.id!)
-  try await testCollection.delete(id: created2.id!)
+  try await posts.delete(id: created1.id)
+  try await posts.delete(id: created2.id)
 }
 
 @Test
@@ -123,8 +107,8 @@ func crud_error_handling() async throws {
   do {
     let _ = try await pb.getOne(
       id: "non-existent-id",
-      collection: "test_collection",
-      model: TestRecord.self)
+      collection: "posts",
+      model: Post.self)
     #expect(false, "Should have thrown an error")
   } catch {
     // Expected error
@@ -133,9 +117,9 @@ func crud_error_handling() async throws {
 
   // Try to update a non-existent record
   do {
-    let record = TestRecord(name: "Non-existent", description: "This should fail")
+    let record = Post(id: "non-existent-id", title: "Non-existent", created: "", updated: "")
     let _ = try await pb.update(
-      collection: "test_collection",
+      collection: "posts",
       id: "non-existent-id",
       record: record)
     #expect(false, "Should have thrown an error")

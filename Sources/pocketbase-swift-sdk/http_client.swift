@@ -19,6 +19,7 @@ struct HttpClient {
 
   init(baseUrl: String) {
     self.baseUrl = baseUrl
+    secureStorage = SecureStorage()
   }
 
   // MARK: Internal
@@ -122,6 +123,7 @@ struct HttpClient {
   // MARK: Private
 
   private let baseUrl: String
+  private let secureStorage: SecureStorage
 
   private var retryLimit = 1
   private let logger = Logger(subsystem: "com.drewalth.GageWatcher", category: "NetworkManager")
@@ -138,8 +140,11 @@ extension HttpClient: RequestInterceptor {
   {
     var request = urlRequest
 
-    if let token = UserDefaults.standard.string(forKey: "token") {
-      request.headers.add(.authorization(token))
+    // Check for user token first, then admin token
+    if let token = secureStorage.userToken {
+      request.headers.add(.init(name: "Authorization", value: token))
+    } else if let adminToken = secureStorage.adminToken {
+      request.headers.add(.init(name: "Authorization", value: adminToken))
     }
 
     completion(.success(request))

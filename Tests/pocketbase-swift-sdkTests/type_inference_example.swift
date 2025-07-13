@@ -8,7 +8,7 @@
 import Testing
 @testable import PocketBase
 
-// MARK: - SpotFeed
+// MARK: - Post
 
 
 @Test
@@ -16,34 +16,34 @@ func type_inference_examples() async throws {
   let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
   // Solution 1: Explicitly specify the type
-  let spotFeeds: Collection<SpotFeed> = pb.collection("spot_feed")
+  let posts: Collection<Post> = pb.collection("posts")
 
   // Solution 2: Use type annotation with var
-  var spotFeedCollection = pb.collection("spot_feed") as Collection<SpotFeed>
+  var postCollection = pb.collection("posts") as Collection<Post>
 
   // Solution 3: Use the collection directly in a context where type can be inferred
-  let records = try await spotFeeds.getList()
+  let records = try await posts.getList()
   #expect(records.items.count >= 0)
 
   // Solution 4: Create a helper function
-  func getSpotFeedCollection() -> Collection<SpotFeed> {
-    pb.collection("spot_feed")
+  func getPostCollection() -> Collection<Post> {
+    pb.collection("posts")
   }
 
-  let spotFeedCollection2 = getSpotFeedCollection()
+  let postCollection2 = getPostCollection()
 
   // Solution 5: Use the collection method directly in operations
-  let record = try await spotFeeds.getOne(id: "some-id")
+  let record = try await posts.getOne(id: "some-id")
   #expect(record.id == "some-id")
 }
 
 @Test
 func proper_error_handling() async throws {
   let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
-  let spotFeeds: Collection<SpotFeed> = pb.collection("spot_feed")
+  let posts: Collection<Post> = pb.collection("posts")
   // Correct way to handle errors with type inference
   do {
-    let records = try await spotFeeds.getList()
+    let records = try await posts.getList()
     print("Found \(records.items.count) records")
   } catch {
     print("Error: \(error)")
@@ -51,7 +51,7 @@ func proper_error_handling() async throws {
 
   // Or handle errors at the operation level
   do {
-    let records = try await spotFeeds.getList()
+    let records = try await posts.getList()
     print("Found \(records.items.count) records")
   } catch {
     print("Error fetching records: \(error)")

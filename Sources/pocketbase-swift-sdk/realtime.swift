@@ -10,6 +10,42 @@ import Foundation
 import os
 
 
+extension PocketBase {
+  // MARK: - Realtime
+
+  public func realtime<T: PBCollection>(
+    collection: String,
+    record: String = "*",
+    onConnect: @escaping () -> Void,
+    onDisconnect: @escaping () -> Void,
+    onEvent: @escaping (RealtimeEvent<T>) -> Void)
+    -> Realtime<T>
+  {
+    Realtime(
+      baseURL: baseURL,
+      collection: collection,
+      record: record,
+      onConnect: onConnect,
+      onDisconnect: onDisconnect,
+      onEvent: onEvent)
+  }
+
+  public func realtime<T: PBCollection>(
+    collection: String,
+    record: String = "*",
+    onEvent: @escaping (RealtimeEvent<T>) -> Void)
+    -> Realtime<T>
+  {
+    Realtime(
+      baseURL: baseURL,
+      collection: collection,
+      record: record,
+      onConnect: { },
+      onDisconnect: { },
+      onEvent: onEvent)
+  }
+}
+
 // MARK: - Realtime
 
 public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
