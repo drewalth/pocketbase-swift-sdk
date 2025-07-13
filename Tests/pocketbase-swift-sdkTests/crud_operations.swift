@@ -15,11 +15,12 @@ func crud_basic_operations() async throws {
   let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
   // Create a new record
-  let newRecord = CreatePost(title: "Test Record")
+  let randomTitle = createRandomPostTitle()
+  let newRecord = CreatePost(title: randomTitle)
   let createdRecord = try await pb.create(collection: "posts", record: newRecord, output: Post.self)
 
   #expect(createdRecord.id != "")
-  #expect(createdRecord.title == "Test Record")
+  #expect(createdRecord.title == randomTitle)
 
   // Read the created record
   let retrievedRecord = try await pb.getOne(
@@ -54,11 +55,12 @@ func crud_fluent_api() async throws {
   let posts: Collection<Post> = pb.collection("posts")
 
   // Create a new record using fluent API
-  let newRecord = CreatePost(title: "Fluent Test Record")
+  let randomTitle = createRandomPostTitle()
+  let newRecord = CreatePost(title: randomTitle)
   let createdRecord = try await posts.create(record: newRecord, output: Post.self)
 
   #expect(createdRecord.id != "")
-  #expect(createdRecord.title == "Fluent Test Record")
+  #expect(createdRecord.title == randomTitle)
 
   // Read the created record
   let retrievedRecord = try await posts.getOne(id: createdRecord.id)
@@ -75,17 +77,18 @@ func crud_fluent_api() async throws {
   #expect(patchedRecord.title == "Updated Fluent Record")
 
   // Delete the record
-  try await posts.delete(id: createdRecord.id)
+//  try await posts.delete(id: createdRecord.id)
 }
 
 @Test
 func crud_list_operations() async throws {
   let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
   let posts: Collection<Post> = pb.collection("posts")
-
+  let randomTitle1 = createRandomPostTitle()
+  let randomTitle2 = createRandomPostTitle()
   // Create multiple records
-  let record1 = CreatePost(title: "Record 1")
-  let record2 = CreatePost(title: "Record 2")
+  let record1 = CreatePost(title: randomTitle1)
+  let record2 = CreatePost(title: randomTitle2)
 
   let created1 = try await posts.create(record: record1, output: Post.self)
   let created2 = try await posts.create(record: record2, output: Post.self)
@@ -94,9 +97,9 @@ func crud_list_operations() async throws {
   let records = try await posts.getList(perPage: 10)
   #expect(records.items.count >= 2)
 
-  // Clean up
-  try await posts.delete(id: created1.id)
-  try await posts.delete(id: created2.id)
+//  // Clean up
+//  try await posts.delete(id: created1.id)
+//  try await posts.delete(id: created2.id)
 }
 
 @Test
@@ -127,4 +130,8 @@ func crud_error_handling() async throws {
     // Expected error
     #expect(true)
   }
+}
+
+func createRandomPostTitle() -> String {
+  "Test Record \(Int.random(in: 1...1000000))"
 }

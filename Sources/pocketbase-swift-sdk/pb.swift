@@ -5,6 +5,7 @@
 //  Created by Andrew Althage on 7/12/25.
 //
 
+import Alamofire
 import Foundation
 import os
 
@@ -14,10 +15,13 @@ public typealias PBCollection = Decodable & Encodable & Sendable
 
 public typealias PBIdentifiableCollection = PBBaseRecord & PBCollection
 
-// MARK: - EmptyResponse
+// MARK: - PBEmptyEntity
 
-public struct EmptyResponse: Decodable, Encodable, Sendable {
-  // Empty response for operations that don't return data
+public struct PBEmptyEntity: Codable, EmptyResponse {
+
+  public static func emptyValue() -> PBEmptyEntity {
+    PBEmptyEntity()
+  }
 }
 
 // MARK: - PBListResponse
@@ -359,7 +363,7 @@ public class PocketBase {
   {
     let urlString = "/api/collections/\(collection)/records/\(id)"
     logger.info("DELETE \(urlString)")
-    let _: EmptyResponse = try await httpClient.delete(urlString, output: EmptyResponse.self).get()
+    let _: EmptyResponse = try await httpClient.delete(urlString, output: PBEmptyEntity.self).get()
   }
 
 //  // MARK: - Realtime
@@ -493,7 +497,7 @@ public class Collection<T: PBCollection> {
   {
     let urlString = "/api/collections/\(collectionName)/records/\(id)"
     logger.info("DELETE \(urlString)")
-    let _: EmptyResponse = try await httpClient.delete(urlString, output: EmptyResponse.self).get()
+    let _: EmptyResponse = try await httpClient.delete(urlString, output: PBEmptyEntity.self).get()
   }
 
   public func realtime(

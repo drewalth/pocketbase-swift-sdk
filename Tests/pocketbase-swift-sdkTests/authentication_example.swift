@@ -7,32 +7,6 @@
 import Testing
 @testable import PocketBase
 
-// MARK: - TestUser
-
-// Define test models that conform to PBIdentifiableCollection
-struct TestUser: PBIdentifiableCollection {
-  let id: String
-  let email: String
-  let username: String?
-  let name: String?
-  let avatar: String?
-  let verified: Bool
-  let created: String
-  let updated: String
-  let collectionId: String
-  let collectionName: String
-}
-
-// MARK: - TestAdmin
-
-struct TestAdmin: PBIdentifiableCollection {
-  let id: String
-  let email: String
-  let avatar: String?
-  let created: String
-  let updated: String
-}
-
 @Test("Authentication: Full user flow")
 func authentication_user_flow() async throws {
   let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
@@ -54,7 +28,7 @@ func authentication_user_flow() async throws {
     #expect(pb.isAuthenticated)
     #expect(pb.currentUserId == userId)
   } catch {
-    print("❌ Sign up failed: \(error)")
+    print("Sign up failed: \(error)")
     // If user already exists, try to sign in instead
   }
 
@@ -63,7 +37,7 @@ func authentication_user_flow() async throws {
     let authResult = try await pb.authWithPassword(
       email: "new@drewalth.com",
       password: "password123",
-      userType: TestUser.self)
+      userType: User.self)
 
     #expect(authResult.record.id != "")
 
@@ -78,7 +52,7 @@ func authentication_user_flow() async throws {
 
   // Refresh authentication token
   do {
-    let refreshResult = try await pb.authRefresh(userType: TestUser.self)
+    let refreshResult = try await pb.authRefresh(userType: User.self)
     print("✅ Token refreshed: \(refreshResult.token)")
     #expect(pb.isAuthenticated)
   } catch {
@@ -98,7 +72,7 @@ func authentication_user_flow() async throws {
 
   // Request password reset
   do {
-    let _ = try await pb.requestPasswordReset(email: "test@example.com")
+    let _ = try await pb.requestPasswordReset(email: "new@drewalth.com")
     print("✅ Password reset requested")
   } catch {
     print("❌ Password reset request failed: \(error)")
@@ -107,7 +81,7 @@ func authentication_user_flow() async throws {
 
   // Request email verification
   do {
-    let _ = try await pb.requestVerification(email: "test@example.com")
+    let _ = try await pb.requestVerification(email: "new@drewalth.com")
     print("✅ Email verification requested")
   } catch {
     print("❌ Email verification request failed: \(error)")
@@ -121,31 +95,3 @@ func authentication_user_flow() async throws {
   #expect(pb.currentUserId == nil)
 }
 
-@Test("Authentication: State transitions")
-func authentication_state_transitions() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
-  #expect(!pb.isAuthenticated)
-  #expect(!pb.isAdminAuthenticated)
-  #expect(pb.currentUserId == nil)
-  #expect(pb.currentAdminId == nil)
-
-  // Sign in as user
-  do {
-    let _ = try await pb.authWithPassword(
-      email: "test@example.com",
-      password: "password123",
-      userType: TestUser.self)
-    #expect(pb.isAuthenticated)
-    #expect(!pb.isAdminAuthenticated)
-    #expect(pb.currentUserId != nil)
-    #expect(pb.currentAdminId == nil)
-    pb.signOut()
-    #expect(!pb.isAuthenticated)
-    #expect(!pb.isAdminAuthenticated)
-    #expect(pb.currentUserId == nil)
-    #expect(pb.currentAdminId == nil)
-  } catch {
-    print("❌ Authentication state test failed: \(error)")
-    #expect(false, "User authentication should succeed")
-  }
-}

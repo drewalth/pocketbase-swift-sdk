@@ -19,13 +19,14 @@ func new_api_collection_fluent() async throws {
   // Using the new fluent API
   let postCollection: Collection<Post> = pb.collection("posts")
 
-  // Get a single record
-  let post = try await postCollection.getOne(id: "e849z3g13jls740")
-  #expect(post.id == "e849z3g13jls740")
-
-  // Get a list of records
   let posts = try await postCollection.getList()
   #expect(posts.items.count > 0)
+
+  let testID = posts.items[0].id
+
+  // Get a single record
+  let post = try await postCollection.getOne(id: testID)
+  #expect(post.id == testID)
 }
 
 @Test

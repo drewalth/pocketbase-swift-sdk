@@ -48,7 +48,7 @@ extension PocketBase {
     logger.info("POST \(urlString) - Refreshing user auth token")
     let result: AuthRefreshResponse<T> = try await httpClient.post(
       urlString,
-      input: EmptyResponse(),
+      input: PBEmptyEntity(),
       output: AuthRefreshResponse<T>.self).get()
 
     // Update the stored token securely
@@ -58,12 +58,12 @@ extension PocketBase {
   }
 
   /// Request password reset
-  public func requestPasswordReset(email: String) async throws -> EmptyResponse {
+  public func requestPasswordReset(email: String) async throws -> PBEmptyEntity {
     let urlString = "/api/collections/users/request-password-reset"
     let body = ["email": email]
 
     logger.info("POST \(urlString) - Requesting password reset")
-    return try await httpClient.post(urlString, input: body, output: EmptyResponse.self).get()
+    return try await httpClient.post(urlString, input: body, output: PBEmptyEntity.self).get()
   }
 
   /// Confirm password reset
@@ -71,7 +71,7 @@ extension PocketBase {
     token: String,
     password: String,
     passwordConfirm: String)
-    async throws -> EmptyResponse
+    async throws -> PBEmptyEntity
   {
     let urlString = "/api/collections/users/confirm-password-reset"
     let body = [
@@ -81,25 +81,25 @@ extension PocketBase {
     ]
 
     logger.info("POST \(urlString) - Confirming password reset")
-    return try await httpClient.post(urlString, input: body, output: EmptyResponse.self).get()
+    return try await httpClient.post(urlString, input: body, output: PBEmptyEntity.self).get()
   }
 
   /// Request email verification
-  public func requestVerification(email: String) async throws -> EmptyResponse {
+  public func requestVerification(email: String) async throws -> PBEmptyEntity {
     let urlString = "/api/collections/users/request-verification"
     let body = ["email": email]
 
     logger.info("POST \(urlString) - Requesting email verification")
-    return try await httpClient.post(urlString, input: body, output: EmptyResponse.self).get()
+    return try await httpClient.post(urlString, input: body, output: PBEmptyEntity.self).get()
   }
 
   /// Confirm email verification
-  public func confirmVerification(token: String) async throws -> EmptyResponse {
+  public func confirmVerification(token: String) async throws -> PBEmptyEntity {
     let urlString = "/api/collections/users/confirm-verification"
     let body = ["token": token]
 
     logger.info("POST \(urlString) - Confirming email verification")
-    return try await httpClient.post(urlString, input: body, output: EmptyResponse.self).get()
+    return try await httpClient.post(urlString, input: body, output: PBEmptyEntity.self).get()
   }
 
   /// Get available authentication methods

@@ -32,9 +32,11 @@ func type_inference_examples() async throws {
 
   let postCollection2 = getPostCollection()
 
+  let testID = records.items.first!.id
+
   // Solution 5: Use the collection method directly in operations
-  let record = try await posts.getOne(id: "some-id")
-  #expect(record.id == "some-id")
+  let record = try await posts.getOne(id: testID)
+  #expect(record.id == testID)
 }
 
 @Test

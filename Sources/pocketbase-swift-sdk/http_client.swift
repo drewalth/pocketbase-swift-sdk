@@ -61,7 +61,7 @@ struct HttpClient {
         .init(name: "Content-Type", value: "application/json"),
       ],
       interceptor: self)
-      .validate().serializingDecodable(Output.self, emptyResponseCodes: [200])
+      .validate().serializingDecodable(Output.self, emptyResponseCodes: [200, 204, 205])
     return await task.result
   }
 
