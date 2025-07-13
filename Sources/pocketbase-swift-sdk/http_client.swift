@@ -7,7 +7,7 @@
 
 import Alamofire
 import Foundation
-import os
+@preconcurrency import os
 
 public typealias NetworkError = AFError
 
@@ -126,7 +126,9 @@ struct HttpClient {
   private let secureStorage: SecureStorage
 
   private var retryLimit = 1
-  private let logger = Logger(subsystem: "com.drewalth.GageWatcher", category: "NetworkManager")
+  private let logger = Logger(
+    subsystem: Bundle.main.bundleIdentifier ?? "io.pocketbase.swift.sdk",
+    category: "PocketBase.HttpClient")
 }
 
 // MARK: RequestInterceptor
