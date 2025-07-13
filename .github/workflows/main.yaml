@@ -9,28 +9,23 @@ env:
 
 jobs:
   setup-test-server:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
-      - name: Build test server
-        run: go build -v ./...
-        working-directory: ./test-server
-      - name: Install dependencies
+      - name: Install Go dependencies
         run: go get ./...
         working-directory: ./test-server
-  test:
-    needs: setup-test-server
-    runs-on: macos-latest
-    steps:
-        - uses: actions/checkout@v4
-        - uses: swift-actions/setup-swift@v2
-        - name: Build
-          run: swift build -v
-        - name: Run tests
-          run: |
-            cd ./test-server && go run . serve --dir="./test_pb_data" &
-            sleep 10 && swift test -v
+      - name: Build Test Pocketbase Server
+        run: go build -v ./...
+        working-directory: ./test-server
+      - uses: swift-actions/setup-swift@v2
+      - name: Build
+        run: swift build -v
+      - name: Run tests
+        run: |
+          cd ./test-server && go run . serve --dir="./test_pb_data" &
+          sleep 10 && swift test -v
