@@ -1,0 +1,24 @@
+{
+  "originHash" : "441d6049d265bc62e94c4de93d3522c7fefa9e7c6740ff5ead5138391347d840",
+  "pins" : [
+    {
+      "identity" : "alamofire",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Alamofire/Alamofire.git",
+      "state" : {
+        "revision" : "513364f870f6bfc468f9d2ff0a95caccc10044c5",
+        "version" : "5.10.2"
+      }
+    },
+    {
+      "identity" : "eventsource",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/inaka/EventSource.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "78934b361891c7d0fa3d399d128e959f0c94d267"
+      }
+    }
+  ],
+  "version" : 3
+}
