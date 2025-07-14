@@ -2,7 +2,9 @@
 
 A Swift SDK for [Pocketbase](https://pocketbase.io/) v0.28.2.
 
-> Note: This is a work in progress. The SDK is not yet complete.
+[![Build](https://github.com/drewalth/pocketbase-swift-sdk/actions/workflows/main.yaml/badge.svg)](https://github.com/drewalth/pocketbase-swift-sdk/actions/workflows/main.yaml) [![Swift](https://img.shields.io/badge/Swift-6.0-orange?style=flat-square)](https://img.shields.io/badge/Swift-6.0-Orange?style=flat-square)
+[![Platforms](https://img.shields.io/badge/Platforms-macOS_iOS-yellowgreen?style=flat-square)](https://img.shields.io/badge/Platforms-macOS_iOS-YellowGreen?style=flat-square)
+
 
 ## Features
 
@@ -15,9 +17,15 @@ A Swift SDK for [Pocketbase](https://pocketbase.io/) v0.28.2.
 - ✅ Type-safe data models
 - ✅ Automatic token management (stores tokens securely)
 
+
+> Note: This is a work in progress. The SDK is not yet have 100% feature parity with the [js-sdk](https://github.com/pocketbase/js-sdk) but it's close.
+> Any contributions are welcome!
+
 ## Motivation
 
-Pocketbase is a great framework for quick prototyping. In an ideal world, Pocketbase would generate Swagger/OpenAPI documentation, but it doesn't. This SDK aims to make it easier to use Pocketbase with Swift projects.
+Pocketbase is a great framework for quick prototyping and small scale applications. In an ideal world, Pocketbase would generate Swagger/OpenAPI documentation, but currently it doesn't. And there is [no plan](https://github.com/pocketbase/pocketbase/issues/945) to add it in the future. 
+
+This SDK aims to make it easier to use Pocketbase with Swift projects.
 
 ## Installation
 

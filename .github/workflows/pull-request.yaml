@@ -1,11 +1,15 @@
-name: Build
+name: Pull Request
 
 on:
-  push:
+  pull_request:
     branches: ["main"]
 
 env:
   GO_VERSION: "1.24.3"
+
+concurrency:
+  group: branch-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -28,4 +32,4 @@ jobs:
       - name: Run tests
         run: |
           cd ./test-server && go run . serve --dir="./test_pb_data" &
-          sleep 10 && swift package clean && swift test -v
+          sleep 10 && swift package clean &&swift test -v
