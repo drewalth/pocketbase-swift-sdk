@@ -244,7 +244,7 @@ struct FilterEdgeCases {
 
     #expect(filter.queryString.contains("name=\"John Doe\""))
     #expect(filter.queryString.contains("description?~\"test@example.com\""))
-    #expect(filter.queryString.contains("path~\"\\/api\\/users\""))
+    #expect(filter.queryString.contains("path~\"/api/users\""))
   }
 
   @Test("Empty values")
