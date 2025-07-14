@@ -40,8 +40,8 @@ struct HttpClient {
     output _: Output.Type)
     async -> Result<Output, NetworkError>
   {
-    print(baseUrl + url)
-    let task = sessionManager.request(baseUrl + url, interceptor: self).validate().serializingDecodable(Output.self)
+    print(url)
+    let task = sessionManager.request(url, interceptor: self).validate().serializingDecodable(Output.self)
     return await task.result
   }
 
@@ -53,7 +53,7 @@ struct HttpClient {
     async -> Result<Output, NetworkError> where Output: Decodable
   {
     let task = sessionManager.request(
-      baseUrl + url,
+      url,
       method: .post,
       parameters: input,
       encoder: .json,
@@ -68,7 +68,7 @@ struct HttpClient {
   /// Submits HTTP DELETE request
   func delete<Output: Decodable & Sendable>(_ url: String, output _: Output.Type) async -> Result<Output, NetworkError> {
     let task = sessionManager.request(
-      baseUrl + url,
+      url,
       method: .delete,
       interceptor: self)
       .validate()
@@ -84,7 +84,7 @@ struct HttpClient {
     async -> Result<Output, NetworkError>
   {
     let task = sessionManager.request(
-      baseUrl + url,
+      url,
       method: .put,
       parameters: input,
       encoder: .json,
@@ -106,7 +106,7 @@ struct HttpClient {
     async -> Result<Output, NetworkError>
   {
     let task = sessionManager.request(
-      baseUrl + url,
+      url,
       method: .patch,
       parameters: input,
       encoder: .json,

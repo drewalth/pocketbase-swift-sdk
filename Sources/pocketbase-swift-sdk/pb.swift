@@ -106,42 +106,45 @@ public class PocketBase {
     id: String,
     collection: String,
     model: Output.Type,
-    expand _: String? = nil)
+    expand: ExpandQuery? = nil)
     async throws -> Output
   {
     let urlString = "/api/collections/\(collection)/records/\(id)"
-    logger.info("GET \(urlString)")
-    return try await httpClient.get(urlString, output: model).get()
+    let finalURLString = buildURL(urlString, expand: expand)
+    logger.info("GET \(finalURLString)")
+    return try await httpClient.get(finalURLString, output: model).get()
   }
 
   public func getList<T: PBCollection>(
     collection: String,
     model _: T.Type,
-    expand: String? = nil,
+    expand: ExpandQuery? = nil,
     page: Int = 1,
     perPage: Int = 100)
     async throws -> PBListResponse<T>
   {
-    let baseURLString = "/api/collections/\(collection)/records"
+    let path = "/api/collections/\(collection)/records"
     let queryItems = {
       var baseQueryItems: [URLQueryItem] = [
         URLQueryItem(name: "page", value: "\(page)"),
         URLQueryItem(name: "perPage", value: "\(perPage)"),
       ]
 
-      if let expand {
-        baseQueryItems.append(URLQueryItem(name: "expand", value: expand))
+      if let expand, !expand.isEmpty {
+        baseQueryItems.append(URLQueryItem(name: "expand", value: expand.queryString))
       }
       return baseQueryItems
     }()
 
-    var url = URLComponents(string: baseURLString)
-
+    var url = URLComponents(string: baseURL)
 
     guard url != nil else {
       throw URLError(.badURL)
     }
 
+    // Append the path to the existing path
+    let fullPath = (url?.path ?? "") + path
+    url?.path = fullPath
     url?.queryItems = queryItems
 
     guard let urlString = url?.string else {
@@ -157,7 +160,8 @@ public class PocketBase {
     output: Output.Type)
     async throws -> Output
   {
-    let urlString = "/api/collections/\(collection)/records"
+    let path = "/api/collections/\(collection)/records"
+    let urlString = buildURL(path)
     logger.info("POST \(urlString)")
     return try await httpClient.post(urlString, input: record, output: output).get()
   }
@@ -168,7 +172,8 @@ public class PocketBase {
     record: T)
     async throws -> T
   {
-    let urlString = "/api/collections/\(collection)/records/\(id)"
+    let path = "/api/collections/\(collection)/records/\(id)"
+    let urlString = buildURL(path)
     logger.info("PATCH \(urlString)")
     return try await httpClient.patch(urlString, input: record, output: T.self).get()
   }
@@ -178,7 +183,8 @@ public class PocketBase {
     id: String)
     async throws
   {
-    let urlString = "/api/collections/\(collection)/records/\(id)"
+    let path = "/api/collections/\(collection)/records/\(id)"
+    let urlString = buildURL(path)
     logger.info("DELETE \(urlString)")
     let _: EmptyResponse = try await httpClient.delete(urlString, output: PBEmptyEntity.self).get()
   }
@@ -193,6 +199,22 @@ public class PocketBase {
   var httpClient: HttpClient
   let secureStorage = SecureStorage()
   let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "io.pocketbase.swift.sdk", category: "PocketBase")
+
+  func buildURL(_ path: String, expand: ExpandQuery? = nil) -> String {
+    var url = URLComponents(string: baseURL)
+
+    // Append the path to the existing path, ensuring proper URL construction
+    let fullPath = (url?.path ?? "") + path
+    url?.path = fullPath
+
+    if let expand, !expand.isEmpty {
+      url?.queryItems = [URLQueryItem(name: "expand", value: expand.queryString)]
+    }
+    let val = url?.string ?? ""
+
+    print("Built URL: \(val)")
+    return val
+  }
 
 }
 
@@ -212,39 +234,43 @@ public class Collection<T: PBCollection> {
 
   public func getOne(
     id: String,
-    expand _: String? = nil)
+    expand: ExpandQuery? = nil)
     async throws -> T
   {
     let urlString = "/api/collections/\(collectionName)/records/\(id)"
-    logger.info("GET \(urlString)")
-    return try await httpClient.get(urlString, output: T.self).get()
+    let finalURLString = buildURL(urlString, expand: expand)
+    logger.info("GET \(finalURLString)")
+    return try await httpClient.get(finalURLString, output: T.self).get()
   }
 
   public func getList(
-    expand: String? = nil,
+    expand: ExpandQuery? = nil,
     page: Int = 1,
     perPage: Int = 100)
     async throws -> PBListResponse<T>
   {
-    let baseURLString = "/api/collections/\(collectionName)/records"
+    let path = "/api/collections/\(collectionName)/records"
     let queryItems = {
       var baseQueryItems: [URLQueryItem] = [
         URLQueryItem(name: "page", value: "\(page)"),
         URLQueryItem(name: "perPage", value: "\(perPage)"),
       ]
 
-      if let expand {
-        baseQueryItems.append(URLQueryItem(name: "expand", value: expand))
+      if let expand, !expand.isEmpty {
+        baseQueryItems.append(URLQueryItem(name: "expand", value: expand.queryString))
       }
       return baseQueryItems
     }()
 
-    var url = URLComponents(string: baseURLString)
+    var url = URLComponents(string: baseURL)
 
     guard url != nil else {
       throw URLError(.badURL)
     }
 
+    // Append the path to the existing path
+    let fullPath = (url?.path ?? "") + path
+    url?.path = fullPath
     url?.queryItems = queryItems
 
     guard let urlString = url?.string else {
@@ -259,7 +285,8 @@ public class Collection<T: PBCollection> {
     output: Output.Type)
     async throws -> Output
   {
-    let urlString = "/api/collections/\(collectionName)/records"
+    let path = "/api/collections/\(collectionName)/records"
+    let urlString = buildURL(path)
     logger.info("POST \(urlString)")
     return try await httpClient.post(urlString, input: record, output: output).get()
   }
@@ -269,7 +296,8 @@ public class Collection<T: PBCollection> {
     record: T)
     async throws -> T
   {
-    let urlString = "/api/collections/\(collectionName)/records/\(id)"
+    let path = "/api/collections/\(collectionName)/records/\(id)"
+    let urlString = buildURL(path)
     logger.info("PATCH \(urlString)")
     return try await httpClient.patch(urlString, input: record, output: T.self).get()
   }
@@ -278,7 +306,8 @@ public class Collection<T: PBCollection> {
     id: String)
     async throws
   {
-    let urlString = "/api/collections/\(collectionName)/records/\(id)"
+    let path = "/api/collections/\(collectionName)/records/\(id)"
+    let urlString = buildURL(path)
     logger.info("DELETE \(urlString)")
     let _: EmptyResponse = try await httpClient.delete(urlString, output: PBEmptyEntity.self).get()
   }
@@ -321,6 +350,19 @@ public class Collection<T: PBCollection> {
   private let logger = Logger(
     subsystem: Bundle.main.bundleIdentifier ?? "io.pocketbase.swift.sdk",
     category: "PocketBase.Collection")
+
+  private func buildURL(_ path: String, expand: ExpandQuery? = nil) -> String {
+    var url = URLComponents(string: baseURL)
+
+    // Append the path to the existing path, ensuring proper URL construction
+    let fullPath = (url?.path ?? "") + path
+    url?.path = fullPath
+
+    if let expand, !expand.isEmpty {
+      url?.queryItems = [URLQueryItem(name: "expand", value: expand.queryString)]
+    }
+    return url?.string ?? ""
+  }
 
 }
 

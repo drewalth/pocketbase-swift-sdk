@@ -15,7 +15,8 @@ extension PocketBase {
     userType _: T.Type)
     async throws -> AuthModel<T>
   {
-    let urlString = "/api/collections/users/auth-with-password"
+    let path = "/api/collections/users/auth-with-password"
+    let urlString = buildURL(path)
     let body: [String: String] = ["password": password, "identity": email]
 
     logger.info("POST \(urlString) - Authenticating user")
@@ -33,7 +34,8 @@ extension PocketBase {
   public func signUp<T: PBIdentifiableCollection>(dto: PBCreateUser, userType _: T.Type)
     async throws -> T
   {
-    let urlString = "/api/collections/users/records"
+    let path = "/api/collections/users/records"
+    let urlString = buildURL(path)
 
     logger.info("POST \(urlString) - Creating new user account")
     let result: T = try await httpClient.post(urlString, input: dto, output: T.self).get()
@@ -43,7 +45,8 @@ extension PocketBase {
 
   /// Refresh the user authentication token
   public func authRefresh<T: PBIdentifiableCollection>(userType _: T.Type) async throws -> AuthRefreshResponse<T> {
-    let urlString = "/api/collections/users/auth-refresh"
+    let path = "/api/collections/users/auth-refresh"
+    let urlString = buildURL(path)
 
     logger.info("POST \(urlString) - Refreshing user auth token")
     let result: AuthRefreshResponse<T> = try await httpClient.post(
@@ -59,7 +62,8 @@ extension PocketBase {
 
   /// Request password reset
   public func requestPasswordReset(email: String) async throws -> PBEmptyEntity {
-    let urlString = "/api/collections/users/request-password-reset"
+    let path = "/api/collections/users/request-password-reset"
+    let urlString = buildURL(path)
     let body = ["email": email]
 
     logger.info("POST \(urlString) - Requesting password reset")
@@ -73,7 +77,8 @@ extension PocketBase {
     passwordConfirm: String)
     async throws -> PBEmptyEntity
   {
-    let urlString = "/api/collections/users/confirm-password-reset"
+    let path = "/api/collections/users/confirm-password-reset"
+    let urlString = buildURL(path)
     let body = [
       "token": token,
       "password": password,
@@ -86,7 +91,8 @@ extension PocketBase {
 
   /// Request email verification
   public func requestVerification(email: String) async throws -> PBEmptyEntity {
-    let urlString = "/api/collections/users/request-verification"
+    let path = "/api/collections/users/request-verification"
+    let urlString = buildURL(path)
     let body = ["email": email]
 
     logger.info("POST \(urlString) - Requesting email verification")
@@ -95,7 +101,8 @@ extension PocketBase {
 
   /// Confirm email verification
   public func confirmVerification(token: String) async throws -> PBEmptyEntity {
-    let urlString = "/api/collections/users/confirm-verification"
+    let path = "/api/collections/users/confirm-verification"
+    let urlString = buildURL(path)
     let body = ["token": token]
 
     logger.info("POST \(urlString) - Confirming email verification")
@@ -104,7 +111,8 @@ extension PocketBase {
 
   /// Get available authentication methods
   public func getAuthMethods() async throws -> AuthMethodsList {
-    let urlString = "/api/collections/users/auth-methods"
+    let path = "/api/collections/users/auth-methods"
+    let urlString = buildURL(path)
 
     logger.info("GET \(urlString) - Getting auth methods")
     return try await httpClient.get(urlString, output: AuthMethodsList.self).get()

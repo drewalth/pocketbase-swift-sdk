@@ -143,6 +143,97 @@ let updatedBookmark = try await bookmarksCollection.update(
 try await bookmarksCollection.delete(id: newBookmark.id)
 ```
 
+### Expand Functionality
+
+The SDK provides powerful expand functionality to include related data in your queries:
+
+#### Basic Expansion
+
+```swift
+// Expand a single field
+let expandQuery = ExpandQuery("author")
+let posts = try await pb.getList(
+    collection: "posts",
+    model: Post.self,
+    expand: expandQuery
+)
+
+// Expand multiple fields
+let expandQuery = ExpandQuery("author", "category", "tags")
+let posts = try await pb.getList(
+    collection: "posts",
+    model: Post.self,
+    expand: expandQuery
+)
+```
+
+#### Nested Expansion
+
+```swift
+// Expand nested relationships
+let expandQuery = ExpandQuery("author.profile", "category.parent")
+let posts = try await pb.getList(
+    collection: "posts",
+    model: Post.self,
+    expand: expandQuery
+)
+```
+
+#### Builder Pattern
+
+```swift
+// Use the builder pattern for complex expansions
+let expandQuery = ExpandBuilder()
+    .field("author")
+    .field("category")
+    .nested("author.profile")
+    .nested("category.parent")
+    .build()
+
+let posts = try await pb.getList(
+    collection: "posts",
+    model: Post.self,
+    expand: expandQuery
+)
+```
+
+#### Fluent API with Expand
+
+```swift
+let posts: Collection<Post> = pb.collection("posts")
+
+// Expand with fluent API
+let expandQuery = ExpandQuery("author", "category")
+let result = try await posts.getList(expand: expandQuery)
+
+// Expand on single record
+let post = try await posts.getOne(
+    id: "post-id",
+    expand: ExpandQuery("author.profile")
+)
+```
+
+#### Conditional Expansion
+
+```swift
+let builder = ExpandBuilder()
+
+if shouldIncludeAuthor {
+    builder.field("author")
+}
+
+if shouldIncludeCategory {
+    builder.field("category")
+}
+
+let expandQuery = builder.build()
+let posts = try await pb.getList(
+    collection: "posts",
+    model: Post.self,
+    expand: expandQuery
+)
+```
+
 ### Realtime
 
 ```swift
