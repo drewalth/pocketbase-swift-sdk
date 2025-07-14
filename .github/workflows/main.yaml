@@ -3,6 +3,8 @@ name: Build
 on:
   push:
     branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 env:
   GO_VERSION: "1.24.3"
