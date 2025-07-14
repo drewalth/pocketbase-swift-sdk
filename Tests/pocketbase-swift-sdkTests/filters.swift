@@ -19,14 +19,14 @@ struct FiltersExamples {
     let filter1 = FiltersQuery()
       .equal(field: "status", value: "active")
 
-    #expect(filter1.queryString == "status=active")
+    #expect(filter1.queryString == "status=\"active\"")
 
     // Example 2: Multiple conditions
     let filter2 = FiltersQuery()
       .equal(field: "status", value: "active")
       .greaterThan(field: "age", value: "18")
 
-    #expect(filter2.queryString == "status=active&&age>18")
+    #expect(filter2.queryString == "status=\"active\"&&age>18")
   }
 
   @Test("Filter builder usage")
@@ -38,7 +38,7 @@ struct FiltersExamples {
       .contains(field: "name", value: "phone")
       .build()
 
-    #expect(filter.queryString == "category=electronics&&price>100&&name?~phone")
+    #expect(filter.queryString == "category=\"electronics\"&&price>100&&name?~\"phone\"")
   }
 
   @Test("String filters")
@@ -47,19 +47,19 @@ struct FiltersExamples {
     let likeFilter = FiltersQuery()
       .like(field: "name", value: "john")
 
-    #expect(likeFilter.queryString == "name~john")
+    #expect(likeFilter.queryString == "name~\"john\"")
 
     // Contains filter
     let containsFilter = FiltersQuery()
       .contains(field: "description", value: "important")
 
-    #expect(containsFilter.queryString == "description?~important")
+    #expect(containsFilter.queryString == "description?~\"important\"")
 
     // Not contains filter
     let notContainsFilter = FiltersQuery()
       .notContains(field: "tags", value: "deprecated")
 
-    #expect(notContainsFilter.queryString == "tags!?~deprecated")
+    #expect(notContainsFilter.queryString == "tags!?~\"deprecated\"")
   }
 
   @Test("Numeric filters")
@@ -84,13 +84,13 @@ struct FiltersExamples {
     let inFilter = FiltersQuery()
       .in(field: "status", values: ["active", "pending", "review"])
 
-    #expect(inFilter.queryString == "status?=active,pending,review")
+    #expect(inFilter.queryString == "status?=\"active,pending,review\"")
 
     // Not in filter
     let notInFilter = FiltersQuery()
       .notIn(field: "category", values: ["deleted", "archived"])
 
-    #expect(notInFilter.queryString == "category!?=deleted,archived")
+    #expect(notInFilter.queryString == "category!?=\"deleted,archived\"")
   }
 
   @Test("Null filters")
@@ -99,13 +99,13 @@ struct FiltersExamples {
     let isNullFilter = FiltersQuery()
       .isNull(field: "deleted_at")
 
-    #expect(isNullFilter.queryString == "deleted_at=")
+    #expect(isNullFilter.queryString == "deleted_at=null")
 
     // Is not null
     let isNotNullFilter = FiltersQuery()
       .isNotNull(field: "email")
 
-    #expect(isNotNullFilter.queryString == "email!=")
+    #expect(isNotNullFilter.queryString == "email!=null")
   }
 
   @Test("Complex filters")
@@ -119,7 +119,7 @@ struct FiltersExamples {
       .isNotNull(field: "user_id")
       .build()
 
-    let expected = "status=active&&created_at>2024-01-01&&title?~important&&category!?=deleted,archived&&user_id!="
+    let expected = "status=\"active\"&&created_at>2024-01-01&&title?~\"important\"&&category!?=\"deleted,archived\"&&user_id!=null"
     #expect(complexFilter.queryString == expected)
   }
 
@@ -131,7 +131,7 @@ struct FiltersExamples {
 
     let filter = FiltersQuery(condition1, condition2)
 
-    #expect(filter.queryString == "name~john&&age>25")
+    #expect(filter.queryString == "name~\"john\"&&age>25")
   }
 
   @Test("Empty filters")
@@ -155,7 +155,7 @@ struct FiltersExamples {
       .filter(field: "active", op: .equal, value: "true")
       .like(field: "email", value: "@example.com")
 
-    #expect(filter.queryString == "type=user&&active=true&&email~@example.com")
+    #expect(filter.queryString == "type=\"user\"&&active=true&&email~\"@example.com\"")
   }
 
   @Test("Filter operators")
@@ -190,10 +190,10 @@ struct RealWorldFilterExamples {
       .isNotNull(field: "profile_completed")
       .build()
 
-    // This would generate: status=active&&last_login>2024-01-01&&email?~@company.com&&role!?=admin,superuser&&profile_completed!=
+    // This would generate: status="active"&&last_login>2024-01-01&&email?~"@company.com"&&role!?="admin,superuser"&&profile_completed!=null
     #expect(!userFilter.isEmpty)
-    #expect(userFilter.queryString.contains("status=active"))
-    #expect(userFilter.queryString.contains("email?~@company.com"))
+    #expect(userFilter.queryString.contains("status=\"active\""))
+    #expect(userFilter.queryString.contains("email?~\"@company.com\""))
   }
 
   @Test("Product search example")
@@ -207,7 +207,7 @@ struct RealWorldFilterExamples {
       .notEqual(field: "stock", value: "0")
       .build()
 
-    // This would generate: category=electronics&&price>=50&&price<=500&&name~phone&&stock!=0
+    // This would generate: category="electronics"&&price>=50&&price<=500&&name~"phone"&&stock!=0
     #expect(!productFilter.isEmpty)
     #expect(productFilter.queryString.contains("price>="))
     #expect(productFilter.queryString.contains("price<="))
@@ -223,7 +223,7 @@ struct RealWorldFilterExamples {
       .greaterThan(field: "total", value: "100")
       .build()
 
-    // This would generate: status?=pending,processing,shipped&&created_at>2024-01-01&&created_at<2024-12-31&&total>100
+    // This would generate: status?="pending,processing,shipped"&&created_at>2024-01-01&&created_at<2024-12-31&&total>100
     #expect(!orderFilter.isEmpty)
     #expect(orderFilter.queryString.contains("status?="))
     #expect(orderFilter.queryString.contains("total>100"))
@@ -242,9 +242,9 @@ struct FilterEdgeCases {
       .contains(field: "description", value: "test@example.com")
       .like(field: "path", value: "/api/users")
 
-    #expect(filter.queryString.contains("name=John Doe"))
-    #expect(filter.queryString.contains("description?~test@example.com"))
-    #expect(filter.queryString.contains("path~/api/users"))
+    #expect(filter.queryString.contains("name=\"John Doe\""))
+    #expect(filter.queryString.contains("description?~\"test@example.com\""))
+    #expect(filter.queryString.contains("path~\"\\/api\\/users\""))
   }
 
   @Test("Empty values")
@@ -253,8 +253,8 @@ struct FilterEdgeCases {
       .equal(field: "empty_field", value: "")
       .isNull(field: "null_field")
 
-    #expect(filter.queryString.contains("empty_field="))
-    #expect(filter.queryString.contains("null_field="))
+    #expect(filter.queryString.contains("empty_field=\"\""))
+    #expect(filter.queryString.contains("null_field=null"))
   }
 
   @Test("Single condition filters")
@@ -262,7 +262,7 @@ struct FilterEdgeCases {
     let singleFilter = FiltersQuery()
       .equal(field: "status", value: "active")
 
-    #expect(singleFilter.queryString == "status=active")
+    #expect(singleFilter.queryString == "status=\"active\"")
     #expect(!singleFilter.isEmpty)
   }
 
@@ -272,7 +272,7 @@ struct FilterEdgeCases {
       .equal(field: "user name", value: "John")
       .greaterThan(field: "created date", value: "2024-01-01")
 
-    #expect(filter.queryString.contains("user name=John"))
+    #expect(filter.queryString.contains("user name=\"John\""))
     #expect(filter.queryString.contains("created date>2024-01-01"))
   }
 }

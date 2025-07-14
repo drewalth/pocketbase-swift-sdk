@@ -39,7 +39,24 @@ public struct FilterCondition {
 
   /// Build the filter condition string
   public var conditionString: String {
-    "\(field)\(op.rawValue)\(value)"
+    let lower = value.lowercased()
+    let needsQuotes = !(lower == "null" || lower == "true" || lower == "false" || Double(value) != nil || isDateValue(value))
+    let quotedValue = needsQuotes ? "\"\(value)\"" : value
+    return "\(field)\(op.rawValue)\(quotedValue)"
+  }
+  
+  /// Check if a value looks like a date
+  private func isDateValue(_ value: String) -> Bool {
+    // Simple date pattern matching
+    let datePatterns = [
+      #"^\d{4}-\d{2}-\d{2}$"#, // YYYY-MM-DD
+      #"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$"#, // YYYY-MM-DD HH:MM:SS
+      #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"#, // ISO 8601 format
+    ]
+    
+    return datePatterns.contains { pattern in
+      value.range(of: pattern, options: .regularExpression) != nil
+    }
   }
 }
 
@@ -145,12 +162,12 @@ public struct FiltersQuery {
 
   /// Add an is null filter
   public func isNull(field: String) -> FiltersQuery {
-    filter(field: field, op: .equal, value: "")
+    filter(field: field, op: .equal, value: "null")
   }
 
   /// Add an is not null filter
   public func isNotNull(field: String) -> FiltersQuery {
-    filter(field: field, op: .notEqual, value: "")
+    filter(field: field, op: .notEqual, value: "null")
   }
 
   // MARK: Private
@@ -261,13 +278,13 @@ public class FilterBuilder {
   /// Add an is null filter
   @discardableResult
   public func isNull(field: String) -> FilterBuilder {
-    filter(field: field, op: .equal, value: "")
+    filter(field: field, op: .equal, value: "null")
   }
 
   /// Add an is not null filter
   @discardableResult
   public func isNotNull(field: String) -> FilterBuilder {
-    filter(field: field, op: .notEqual, value: "")
+    filter(field: field, op: .notEqual, value: "null")
   }
 
   /// Build the filters query
