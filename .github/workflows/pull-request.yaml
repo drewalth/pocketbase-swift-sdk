@@ -32,4 +32,4 @@ jobs:
       - name: Run tests
         run: |
           cd ./test-server && go run . serve --dir="./test_pb_data" &
-          sleep 10 && swift test -v
+          sleep 10 && swift package clean &&swift test -v
