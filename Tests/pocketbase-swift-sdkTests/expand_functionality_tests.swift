@@ -10,178 +10,183 @@ import Testing
 
 // MARK: - Expand Functionality Tests
 
-@Test
-func expand_basic_functionality() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+@Suite("Expand Functionality Tests")
+struct ExpandFunctionality {
 
-  // Test simple expand with single field
-  let expandQuery = ExpandQuery("author")
+  @Test
+  func expand_basic_functionality() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
-  // This would expand the author field in a post
-  let posts = try await pb.getList(
-    collection: "posts",
-    model: Post.self,
-    expand: expandQuery,
-    perPage: 5)
+    // Test simple expand with single field
+    let expandQuery = ExpandQuery("author")
 
-  #expect(posts.items.count >= 0)
-}
+    // This would expand the author field in a post
+    let posts = try await pb.getList(
+      collection: "posts",
+      model: Post.self,
+      expand: expandQuery,
+      perPage: 5)
 
-@Test
-func expand_multiple_fields() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+    #expect(posts.items.count >= 0)
+  }
 
-  // Test expand with multiple fields
-  let expandQuery = ExpandQuery("author", "category", "tags")
+  @Test
+  func expand_multiple_fields() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
-  let posts = try await pb.getList(
-    collection: "posts",
-    model: Post.self,
-    expand: expandQuery,
-    perPage: 5)
+    // Test expand with multiple fields
+    let expandQuery = ExpandQuery("author", "category", "tags")
 
-  #expect(posts.items.count >= 0)
-}
+    let posts = try await pb.getList(
+      collection: "posts",
+      model: Post.self,
+      expand: expandQuery,
+      perPage: 5)
 
-@Test
-func expand_nested_fields() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+    #expect(posts.items.count >= 0)
+  }
 
-  // Test nested expansion (e.g., author.profile)
-  let expandQuery = ExpandQuery("author.profile", "category.parent")
+  @Test
+  func expand_nested_fields() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
-  let posts = try await pb.getList(
-    collection: "posts",
-    model: Post.self,
-    expand: expandQuery,
-    perPage: 5)
+    // Test nested expansion (e.g., author.profile)
+    let expandQuery = ExpandQuery("author.profile", "category.parent")
 
-  #expect(posts.items.count >= 0)
-}
+    let posts = try await pb.getList(
+      collection: "posts",
+      model: Post.self,
+      expand: expandQuery,
+      perPage: 5)
 
-@Test
-func expand_fluent_api() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
-  let posts: Collection<Post> = pb.collection("posts")
+    #expect(posts.items.count >= 0)
+  }
 
-  // Test expand with fluent API
-  let expandQuery = ExpandQuery("author")
+  @Test
+  func expand_fluent_api() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+    let posts: Collection<Post> = pb.collection("posts")
 
-  let result = try await posts.getList(
-    expand: expandQuery,
-    perPage: 5)
+    // Test expand with fluent API
+    let expandQuery = ExpandQuery("author")
 
-  #expect(result.items.count >= 0)
-}
+    let result = try await posts.getList(
+      expand: expandQuery,
+      perPage: 5)
 
-@Test
-func expand_builder_pattern() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+    #expect(result.items.count >= 0)
+  }
 
-  // Test using the ExpandBuilder for complex queries
-  let expandQuery = ExpandBuilder()
-    .field("author")
-    .field("category")
-    .nested("author.profile")
-    .nested("category.parent")
-    .build()
+  @Test
+  func expand_builder_pattern() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
-  let posts = try await pb.getList(
-    collection: "posts",
-    model: Post.self,
-    expand: expandQuery,
-    perPage: 5)
+    // Test using the ExpandBuilder for complex queries
+    let expandQuery = ExpandBuilder()
+      .field("author")
+      .field("category")
+      .nested("author.profile")
+      .nested("category.parent")
+      .build()
 
-  #expect(posts.items.count >= 0)
-}
+    let posts = try await pb.getList(
+      collection: "posts",
+      model: Post.self,
+      expand: expandQuery,
+      perPage: 5)
 
-@Test
-func expand_single_record() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+    #expect(posts.items.count >= 0)
+  }
 
-  // First create a record to test with
-  let randomTitle = createRandomPostTitle()
-  let newRecord = CreatePost(title: randomTitle)
-  let createdRecord = try await pb.create(collection: "posts", record: newRecord, output: Post.self)
+  @Test
+  func expand_single_record() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
-  // Test expand on single record
-  let expandQuery = ExpandQuery("author", "category")
+    // First create a record to test with
+    let randomTitle = createRandomPostTitle()
+    let newRecord = CreatePost(title: randomTitle)
+    let createdRecord = try await pb.create(collection: "posts", record: newRecord, output: Post.self)
 
-  let retrievedRecord = try await pb.getOne(
-    id: createdRecord.id,
-    collection: "posts",
-    model: Post.self,
-    expand: expandQuery)
+    // Test expand on single record
+    let expandQuery = ExpandQuery("author", "category")
 
-  #expect(retrievedRecord.id == createdRecord.id)
+    let retrievedRecord = try await pb.getOne(
+      id: createdRecord.id,
+      collection: "posts",
+      model: Post.self,
+      expand: expandQuery)
 
-  // Clean up
-  try await pb.delete(collection: "posts", id: createdRecord.id)
-}
+    #expect(retrievedRecord.id == createdRecord.id)
 
-@Test
-func expand_fluent_single_record() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
-  let posts: Collection<Post> = pb.collection("posts")
+    // Clean up
+    try await pb.delete(collection: "posts", id: createdRecord.id)
+  }
 
-  // First create a record to test with
-  let randomTitle = createRandomPostTitle()
-  let newRecord = CreatePost(title: randomTitle)
-  let createdRecord = try await posts.create(record: newRecord, output: Post.self)
+  @Test
+  func expand_fluent_single_record() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+    let posts: Collection<Post> = pb.collection("posts")
 
-  // Test expand on single record with fluent API
-  let expandQuery = ExpandQuery("author")
+    // First create a record to test with
+    let randomTitle = createRandomPostTitle()
+    let newRecord = CreatePost(title: randomTitle)
+    let createdRecord = try await posts.create(record: newRecord, output: Post.self)
 
-  let retrievedRecord = try await posts.getOne(
-    id: createdRecord.id,
-    expand: expandQuery)
+    // Test expand on single record with fluent API
+    let expandQuery = ExpandQuery("author")
 
-  #expect(retrievedRecord.id == createdRecord.id)
+    let retrievedRecord = try await posts.getOne(
+      id: createdRecord.id,
+      expand: expandQuery)
 
-  // Clean up
-  try await posts.delete(id: createdRecord.id)
-}
+    #expect(retrievedRecord.id == createdRecord.id)
 
-@Test
-func expand_query_string_generation() {
-  // Test ExpandQuery string generation
-  let simpleExpand = ExpandQuery("author")
-  #expect(simpleExpand.queryString == "author")
+    // Clean up
+    try await posts.delete(id: createdRecord.id)
+  }
 
-  let multipleExpand = ExpandQuery("author", "category")
-  #expect(multipleExpand.queryString == "author,category")
+  @Test
+  func expand_query_string_generation() {
+    // Test ExpandQuery string generation
+    let simpleExpand = ExpandQuery("author")
+    #expect(simpleExpand.queryString == "author")
 
-  let nestedExpand = ExpandQuery("author.profile", "category.parent")
-  #expect(nestedExpand.queryString == "author.profile,category.parent")
+    let multipleExpand = ExpandQuery("author", "category")
+    #expect(multipleExpand.queryString == "author,category")
 
-  let emptyExpand = ExpandQuery()
-  #expect(emptyExpand.isEmpty == true)
-  #expect(emptyExpand.queryString == "")
-}
+    let nestedExpand = ExpandQuery("author.profile", "category.parent")
+    #expect(nestedExpand.queryString == "author.profile,category.parent")
 
-@Test
-func expand_builder_fluent_interface() {
-  // Test ExpandBuilder fluent interface
-  let expandQuery = ExpandBuilder()
-    .field("author")
-    .field("category")
-    .nested("author.profile")
-    .build()
+    let emptyExpand = ExpandQuery()
+    #expect(emptyExpand.isEmpty == true)
+    #expect(emptyExpand.queryString == "")
+  }
 
-  #expect(expandQuery.queryString == "author,category,author.profile")
-  #expect(expandQuery.isEmpty == false)
-}
+  @Test
+  func expand_builder_fluent_interface() {
+    // Test ExpandBuilder fluent interface
+    let expandQuery = ExpandBuilder()
+      .field("author")
+      .field("category")
+      .nested("author.profile")
+      .build()
 
-@Test
-func expand_immutable_operations() {
-  // Test that ExpandQuery operations are immutable
-  let original = ExpandQuery("author")
-  let expanded = original.expand("category")
+    #expect(expandQuery.queryString == "author,category,author.profile")
+    #expect(expandQuery.isEmpty == false)
+  }
 
-  #expect(original.queryString == "author")
-  #expect(expanded.queryString == "author,category")
+  @Test
+  func expand_immutable_operations() {
+    // Test that ExpandQuery operations are immutable
+    let original = ExpandQuery("author")
+    let expanded = original.expand("category")
 
-  let nested = expanded.expandNested("author.profile")
-  #expect(nested.queryString == "author,category,author.profile")
-  #expect(expanded.queryString == "author,category") // Original unchanged
+    #expect(original.queryString == "author")
+    #expect(expanded.queryString == "author,category")
+
+    let nested = expanded.expandNested("author.profile")
+    #expect(nested.queryString == "author,category,author.profile")
+    #expect(expanded.queryString == "author,category") // Original unchanged
+  }
+
 }

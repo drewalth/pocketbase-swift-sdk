@@ -8,101 +8,107 @@
 import Testing
 @testable import PocketBase
 
-// MARK: - Post
+@Suite("New API")
+struct NewAPI {
 
-// Using the Post struct from test-models.swift
+  // MARK: - Post
 
-@Test
-func new_api_collection_fluent() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+  // Using the Post struct from test-models.swift
 
-  // Using the new fluent API
-  let postCollection: Collection<Post> = pb.collection("posts")
+  @Test
+  func new_api_collection_fluent() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
-  let posts = try await postCollection.getList()
-  #expect(posts.items.count > 0)
+    // Using the new fluent API
+    let postCollection: Collection<Post> = pb.collection("posts")
 
-  let testID = posts.items[0].id
+    let posts = try await postCollection.getList()
+    #expect(posts.items.count > 0)
 
-  // Get a single record
-  let post = try await postCollection.getOne(id: testID)
-  #expect(post.id == testID)
-}
+    let testID = posts.items[0].id
 
-@Test
-func new_api_realtime_basic() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+    // Get a single record
+    let post = try await postCollection.getOne(id: testID)
+    #expect(post.id == testID)
+  }
 
-  // Create a realtime subscription using the basic API
-  let realtime: Realtime<Post> = pb.realtime(
-    collection: "posts",
-    onEvent: { (event: RealtimeEvent<Post>) in
-      print("Received event: \(event.action) for record: \(event.record.id)")
-    })
+  @Test
+  func new_api_realtime_basic() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
-  // Subscribe to realtime events
-  try await realtime.subscribe()
+    // Create a realtime subscription using the basic API
+    let realtime: Realtime<Post> = pb.realtime(
+      collection: "posts",
+      onEvent: { (event: RealtimeEvent<Post>) in
+        print("Received event: \(event.action) for record: \(event.record.id)")
+      })
 
-  // Later, unsubscribe
-  realtime.unsubscribe()
-}
+    // Subscribe to realtime events
+    try await realtime.subscribe()
 
-@Test
-func new_api_realtime_fluent() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+    // Later, unsubscribe
+    realtime.unsubscribe()
+  }
 
-  // Using the fluent API for realtime
-  let postCollection: Collection<Post> = pb.collection("posts")
+  @Test
+  func new_api_realtime_fluent() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
-  // Create a new record using fluent API
-  let randomTitle = createRandomPostTitle()
-  let newRecord = CreatePost(title: randomTitle)
-  let createdRecord = try await postCollection.create(record: newRecord, output: Post.self)
+    // Using the fluent API for realtime
+    let postCollection: Collection<Post> = pb.collection("posts")
 
-  let realtime: Realtime<Post> = postCollection.realtime(
-    record: createdRecord.id,
-    onEvent: { (event: RealtimeEvent<Post>) in
-      print("Received event: \(event.action) for record: \(event.record.id)")
-      #expect(event.record.title == "Realtime Updated Fluent Record")
-    })
+    // Create a new record using fluent API
+    let randomTitle = createRandomPostTitle()
+    let newRecord = CreatePost(title: randomTitle)
+    let createdRecord = try await postCollection.create(record: newRecord, output: Post.self)
 
-  // Subscribe to realtime events
-  try await realtime.subscribe()
+    let realtime: Realtime<Post> = postCollection.realtime(
+      record: createdRecord.id,
+      onEvent: { (event: RealtimeEvent<Post>) in
+        print("Received event: \(event.action) for record: \(event.record.id)")
+        #expect(event.record.title == "Realtime Updated Fluent Record")
+      })
 
-  // Update the record
-  let updatedRecord = Post(
-    id: createdRecord.id,
-    title: "Realtime Updated Fluent Record",
-    created: createdRecord.created,
-    updated: createdRecord.updated)
+    // Subscribe to realtime events
+    try await realtime.subscribe()
 
-  let patchedRecord = try await postCollection.update(id: createdRecord.id, record: updatedRecord)
-  #expect(patchedRecord.title == "Realtime Updated Fluent Record")
+    let randomRealTimeTitle = createRandomPostTitle()
+    // Update the record
+    let updatedRecord = Post(
+      id: createdRecord.id,
+      title: "Realtime Updated Fluent Record \(randomRealTimeTitle)",
+      created: createdRecord.created,
+      updated: createdRecord.updated)
 
-  // Later, unsubscribe
-  realtime.unsubscribe()
-}
+    let patchedRecord = try await postCollection.update(id: createdRecord.id, record: updatedRecord)
+    #expect(patchedRecord.title == "Realtime Updated Fluent Record \(randomRealTimeTitle)")
 
-@Test
-func new_api_realtime_with_callbacks() async throws {
-  let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+    // Later, unsubscribe
+    realtime.unsubscribe()
+  }
 
-  // Create a realtime subscription with all callbacks
-  let realtime: Realtime<Post> = pb.realtime(
-    collection: "posts",
-    onConnect: {
-      print("Connected to realtime")
-    },
-    onDisconnect: {
-      print("Disconnected from realtime")
-    },
-    onEvent: { (event: RealtimeEvent<Post>) in
-      print("Received event: \(event.action) for record: \(event.record.id)")
-    })
+  @Test
+  func new_api_realtime_with_callbacks() async throws {
+    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
-  // Subscribe to realtime events
-  try await realtime.subscribe()
+    // Create a realtime subscription with all callbacks
+    let realtime: Realtime<Post> = pb.realtime(
+      collection: "posts",
+      onConnect: {
+        print("Connected to realtime")
+      },
+      onDisconnect: {
+        print("Disconnected from realtime")
+      },
+      onEvent: { (event: RealtimeEvent<Post>) in
+        print("Received event: \(event.action) for record: \(event.record.id)")
+      })
 
-  // Later, unsubscribe
-  realtime.unsubscribe()
+    // Subscribe to realtime events
+    try await realtime.subscribe()
+
+    // Later, unsubscribe
+    realtime.unsubscribe()
+  }
+
 }

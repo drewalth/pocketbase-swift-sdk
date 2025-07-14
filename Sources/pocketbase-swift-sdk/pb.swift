@@ -119,6 +119,7 @@ public class PocketBase {
     collection: String,
     model _: T.Type,
     expand: ExpandQuery? = nil,
+    filters: FiltersQuery? = nil,
     page: Int = 1,
     perPage: Int = 100)
     async throws -> PBListResponse<T>
@@ -133,6 +134,11 @@ public class PocketBase {
       if let expand, !expand.isEmpty {
         baseQueryItems.append(URLQueryItem(name: "expand", value: expand.queryString))
       }
+
+      if let filters, !filters.isEmpty {
+        baseQueryItems.append(URLQueryItem(name: "filter", value: filters.queryString))
+      }
+
       return baseQueryItems
     }()
 
@@ -245,6 +251,7 @@ public class Collection<T: PBCollection> {
 
   public func getList(
     expand: ExpandQuery? = nil,
+    filters: FiltersQuery? = nil,
     page: Int = 1,
     perPage: Int = 100)
     async throws -> PBListResponse<T>
@@ -259,6 +266,11 @@ public class Collection<T: PBCollection> {
       if let expand, !expand.isEmpty {
         baseQueryItems.append(URLQueryItem(name: "expand", value: expand.queryString))
       }
+
+      if let filters, !filters.isEmpty {
+        baseQueryItems.append(URLQueryItem(name: "filter", value: filters.queryString))
+      }
+
       return baseQueryItems
     }()
 

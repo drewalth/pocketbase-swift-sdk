@@ -1,4 +1,4 @@
-name: Main
+name: Build
 
 on:
   push:
@@ -8,7 +8,7 @@ env:
   GO_VERSION: "1.24.3"
 
 jobs:
-  main:
+  build:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
