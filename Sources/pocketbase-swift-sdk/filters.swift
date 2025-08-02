@@ -27,15 +27,20 @@ public enum FilterOperator: String, CaseIterable {
 
 /// Represents a single filter condition
 public struct FilterCondition {
-  public let field: String
-  public let op: FilterOperator
-  public let value: String
+
+  // MARK: Lifecycle
 
   public init(field: String, op: FilterOperator, value: String) {
     self.field = field
     self.op = op
     self.value = value
   }
+
+  // MARK: Public
+
+  public let field: String
+  public let op: FilterOperator
+  public let value: String
 
   /// Build the filter condition string
   public var conditionString: String {
@@ -44,7 +49,9 @@ public struct FilterCondition {
     let quotedValue = needsQuotes ? "\"\(value)\"" : value
     return "\(field)\(op.rawValue)\(quotedValue)"
   }
-  
+
+  // MARK: Private
+
   /// Check if a value looks like a date
   private func isDateValue(_ value: String) -> Bool {
     // Simple date pattern matching
@@ -53,7 +60,7 @@ public struct FilterCondition {
       #"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$"#, // YYYY-MM-DD HH:MM:SS
       #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"#, // ISO 8601 format
     ]
-    
+
     return datePatterns.contains { pattern in
       value.range(of: pattern, options: .regularExpression) != nil
     }
