@@ -39,11 +39,47 @@ dependencies: [
 
 ## Usage
 
-### Basic Setup
+### SwiftUI
 
 ```swift
-let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
+// Add the PocketBase instance to the environment
+private struct PB: EnvironmentKey {
+  static let defaultValue = PocketBase(baseURL: "http://127.0.0.1:8090")
+}
+
+extension EnvironmentValues {
+  var pocketBase: PocketBase {
+    get {
+      self[PB.self]
+    } set {
+      self[PB.self] = newValue
+    }
+  }
+}
+
+// Access the PocketBase instance in your views
+struct ContentView: View {
+    @Environment(\.pocketBase) var pocketBase
+    @State private var posts: [Post] = []
+
+    var body: some View {
+        List(posts, id: \.id) { post in
+            Text(post.title)
+        }
+        .task {
+            do {
+                let postCollection: Collection<Post> = pocketBase.collection("posts")
+                let postResult = try await postCollection.getList()
+                posts = postResult.items
+            } catch {
+                print(error)
+            }
+        }
+    }
+}
 ```
+
+> See the [example project](./example) for a more complete example.
 
 ### Data Models
 
