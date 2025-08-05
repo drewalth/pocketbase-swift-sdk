@@ -218,7 +218,6 @@ public class PocketBase {
     }
     let val = url?.string ?? ""
 
-    print("Built URL: \(val)")
     return val
   }
 

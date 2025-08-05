@@ -22,8 +22,6 @@ extension PocketBase {
     logger.info("POST \(urlString) - Authenticating user")
     let result: AuthModel<T> = try await httpClient.post(urlString, input: body, output: AuthModel<T>.self).get()
 
-    print(result)
-
     // Store the token securely
     _ = secureStorage.storeUserToken(result.token, userId: result.record.id)
 
