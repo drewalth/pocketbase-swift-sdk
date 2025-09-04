@@ -17,7 +17,7 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.10.1")),
-    .package(url: "https://github.com/inaka/EventSource.git", branch: "master"),
+    .package(url: "https://github.com/Recouse/EventSource.git", .upToNextMajor(from: "0.1.5")),
   ],
   targets: [
     // Targets are the basic building blocks of a package, defining a module or a test suite.

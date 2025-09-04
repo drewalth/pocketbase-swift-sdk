@@ -40,7 +40,6 @@ struct HttpClient {
     output _: Output.Type)
     async -> Result<Output, NetworkError>
   {
-    print(url)
     let task = sessionManager.request(url, interceptor: self).validate().serializingDecodable(Output.self)
     return await task.result
   }

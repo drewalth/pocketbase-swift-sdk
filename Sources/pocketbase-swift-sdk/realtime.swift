@@ -71,9 +71,11 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
 
   deinit {
     if self.connected {
-      guard let eventSource = self.eventSource else { return }
-      eventSource.disconnect()
+      guard let dataTask else { return }
+      dataTask.cancel(urlSession: URLSession.shared)
     }
+
+    subscriptionTask?.cancel()
   }
 
   // MARK: Public
@@ -92,33 +94,45 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
     guard let url = URL(string: realtimeURL) else {
       throw URLError(.badURL)
     }
-    let eventSource = EventSource(url: url)
 
-    eventSource.onOpen {
-      self.logger.log("Realtime connected")
-      self.connected = true
-      self.onConnect()
+    var urlRequest = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 30)
+    urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+
+    dataTask = eventSource.dataTask(for: urlRequest)
+
+    guard let dataTask else {
+      logger.warning("No data task to subscribe to realtime events.")
+      return
     }
 
-    eventSource.onMessage { id, event, data in
-      self.handleMessage(id: id, event: event, data: data)
+    subscriptionTask = Task {
+      for await event in dataTask.events() {
+        switch event {
+        case .open:
+          logger.info("Realtime connection initiated.")
+        case .error(let error):
+          logger.error("\(error.localizedDescription)")
+        case .event(let event):
+          if event.event == "PB_CONNECT" {
+            logger.info("Realtime connection established.")
+            connected = true
+            handlePBConnect(data: event.data)
+            onConnect()
+          } else {
+            handleRealtimeEvent(data: event.data)
+          }
+        case .closed:
+          logger.info("Realtime connection closed.")
+          connected = false
+          onDisconnect()
+        }
+      }
     }
-
-
-    eventSource.addEventListener("PB_CONNECT") { _, _, data in
-      self.handlePBConnect(data: data)
-    }
-
-    eventSource.addEventListener("\(collection)/\(record)") { _, event, data in
-      self.handleMessage(id: nil, event: event, data: data)
-      self.handleRealtimeEvent(data: data)
-    }
-
-    self.eventSource = eventSource
-    self.eventSource?.connect()
   }
 
   public func unsubscribe() {
+    dataTask?.cancel(urlSession: .shared)
     connected = false
     onDisconnect()
   }
@@ -133,6 +147,9 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
 
   private let baseURL: String
 
+  private var dataTask: EventSource.DataTask?
+  private var subscriptionTask: Task<Void, Never>?
+
 
   private let logger = Logger(
     subsystem: Bundle.main.bundleIdentifier ?? "io.pocketbase.swift.sdk",
@@ -141,7 +158,7 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
   private let onDisconnect: () -> Void
   private let collection: String
   private let record: String
-  private var eventSource: EventSource? = nil
+  private var eventSource = EventSource()
 
   private var clientID: String? = nil {
     didSet {
@@ -188,7 +205,6 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
 
       // Call the onEvent callback with the decoded event
       onEvent(realtimeEvent)
-
     } catch {
       logger.error("Error decoding realtime event: \(error)")
     }

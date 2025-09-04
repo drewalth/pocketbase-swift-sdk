@@ -1,5 +1,5 @@
 {
-  "originHash" : "083d9c7def25123fb0ddcb7ee9a37a11ef5586f1c1ccb878d7cfe80d3e1f7aa9",
+  "originHash" : "da15f502f7d2c1957e949138aeade4e4a72e667b419f03cbf07d52cd1c102beb",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -13,10 +13,10 @@
     {
       "identity" : "eventsource",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/inaka/EventSource.git",
+      "location" : "https://github.com/Recouse/EventSource.git",
       "state" : {
-        "branch" : "master",
-        "revision" : "78934b361891c7d0fa3d399d128e959f0c94d267"
+        "revision" : "7b2f4f585d3927876bd76eaede9fdff779eff102",
+        "version" : "0.1.5"
       }
     }
   ],

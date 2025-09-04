@@ -119,7 +119,8 @@ struct FiltersExamples {
       .isNotNull(field: "user_id")
       .build()
 
-    let expected = "status=\"active\"&&created_at>2024-01-01&&title?~\"important\"&&category!?=\"deleted,archived\"&&user_id!=null"
+    let expected =
+      "status=\"active\"&&created_at>2024-01-01&&title?~\"important\"&&category!?=\"deleted,archived\"&&user_id!=null"
     #expect(complexFilter.queryString == expected)
   }
 

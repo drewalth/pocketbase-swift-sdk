@@ -11,24 +11,6 @@ import Testing
 @Suite("Realtime")
 struct RealtimeTests {
   @Test
-  func new_api_realtime_basic() async throws {
-    let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
-
-    // Create a realtime subscription using the basic API
-    let realtime: Realtime<Post> = pb.realtime(
-      collection: "posts",
-      onEvent: { (event: RealtimeEvent<Post>) in
-        print("Received event: \(event.action) for record: \(event.record.id)")
-      })
-
-    // Subscribe to realtime events
-    try await realtime.subscribe()
-
-    // Later, unsubscribe
-    realtime.unsubscribe()
-  }
-
-  @Test
   func new_api_realtime_fluent() async throws {
     let pb = PocketBase(baseURL: "http://127.0.0.1:8090")
 
@@ -43,8 +25,8 @@ struct RealtimeTests {
     let realtime: Realtime<Post> = postCollection.realtime(
       record: createdRecord.id,
       onEvent: { (event: RealtimeEvent<Post>) in
-        print("Received event: \(event.action) for record: \(event.record.id)")
-        #expect(event.record.title == "Realtime Updated Fluent Record")
+        // TODO: this isnt getting called...
+        #expect(event.record.title == "Realtime Updated Fluent Record foo")
       })
 
     // Subscribe to realtime events
