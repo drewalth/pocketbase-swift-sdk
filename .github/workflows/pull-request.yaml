@@ -26,7 +26,7 @@ jobs:
       - name: Build Test Pocketbase Server
         run: go build -v ./...
         working-directory: ./test-server
-      - uses: swift-actions/setup-swift@v2
+      - uses: swift-actions/setup-swift@v2.3.0
       - name: Build
         run: swift build -v
       - name: Run tests
