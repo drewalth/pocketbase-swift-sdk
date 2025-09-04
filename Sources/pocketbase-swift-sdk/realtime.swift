@@ -7,7 +7,7 @@
 
 import EventSource
 import Foundation
-import os
+import Logging
 
 
 extension PocketBase {
@@ -147,9 +147,7 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
   private var subscriptionTask: Task<Void, Never>?
 
 
-  private let logger = Logger(
-    subsystem: Bundle.main.bundleIdentifier ?? "io.pocketbase.swift.sdk",
-    category: "PocketBase.RealTime")
+  private let logger = Logger(label: "PocketBase.RealTime")
   private let onConnect: () -> Void
   private let onDisconnect: () -> Void
   private let collection: String

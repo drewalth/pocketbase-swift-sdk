@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import os
+import Logging
 import Security
 
 // MARK: - SecureStorage
@@ -244,9 +244,7 @@ public class SecureStorage: @unchecked Sendable {
     static let serviceName = "io.pocketbase.swift.sdk"
   }
 
-  private let logger = Logger(
-    subsystem: Bundle.main.bundleIdentifier ?? "io.pocketbase.swift.sdk",
-    category: "SecureStorage")
+  private let logger = Logger(label: "SecureStorage")
 
   /// Check if we're running in a test environment
   private var isTestEnvironment: Bool {

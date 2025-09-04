@@ -7,7 +7,7 @@
 
 import Alamofire
 import Foundation
-import os
+import Logging
 
 public typealias PBCollection = Decodable & Encodable & Sendable
 
@@ -204,7 +204,7 @@ public class PocketBase {
   let baseURL: String
   var httpClient: HttpClient
   let secureStorage = SecureStorage()
-  let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "io.pocketbase.swift.sdk", category: "PocketBase")
+  let logger = Logger(label: "PocketBase")
 
   func buildURL(_ path: String, expand: ExpandQuery? = nil) -> String {
     var url = URLComponents(string: baseURL)
@@ -358,9 +358,7 @@ public class Collection<T: PBCollection> {
   private let baseURL: String
   private let collectionName: String
   private let httpClient: HttpClient
-  private let logger = Logger(
-    subsystem: Bundle.main.bundleIdentifier ?? "io.pocketbase.swift.sdk",
-    category: "PocketBase.Collection")
+  private let logger = Logger(label: "PocketBase.Collection")
 
   private func buildURL(_ path: String, expand: ExpandQuery? = nil) -> String {
     var url = URLComponents(string: baseURL)
