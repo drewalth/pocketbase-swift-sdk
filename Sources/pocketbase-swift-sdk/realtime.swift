@@ -70,11 +70,7 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
   }
 
   deinit {
-    if self.connected {
-      guard let dataTask else { return }
-      dataTask.cancel(urlSession: URLSession.shared)
-    }
-
+    dataTask?.cancel(urlSession: URLSession.shared)
     subscriptionTask?.cancel()
   }
 
