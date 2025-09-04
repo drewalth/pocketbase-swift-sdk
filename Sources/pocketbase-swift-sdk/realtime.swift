@@ -162,9 +162,6 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
     }
   }
 
-  private func handlePBConnection() { }
-
-
   private func handleMessage(id: String?, event: String?, data: String?) {
     logger.info("id: \(id ?? "No ID"), event: \(event ?? "No event"), data: \(data ?? "No data")")
   }
