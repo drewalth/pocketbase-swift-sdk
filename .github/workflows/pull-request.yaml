@@ -16,6 +16,9 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v2.3.0
+      - name: Build
+        run: swift build -v
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
@@ -26,9 +29,6 @@ jobs:
       - name: Build Test Pocketbase Server
         run: go build -v ./...
         working-directory: ./test-server
-      - uses: swift-actions/setup-swift@v2.3.0
-      - name: Build
-        run: swift build -v
       - name: Run tests
         run: |
           cd ./test-server && go run . serve --dir="./test_pb_data" &
