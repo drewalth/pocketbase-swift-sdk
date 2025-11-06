@@ -24,5 +24,7 @@ jobs:
         working-directory: ./test-server
       - name: Set up Swift
         uses: swift-actions/setup-swift@v2.3.0
+      - name: Install Swiftlint
+        run: brew install swiftlint
       - name: Preflight
         run: make preflight
