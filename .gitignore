@@ -7,3 +7,14 @@ DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
 Package.resolved
+test-server/test_pb_data/auxiliary.db
+
+test-server/test_pb_data/auxiliary.db-shm
+
+test-server/test_pb_data/auxiliary.db-wal
+
+test-server/test_pb_data/data.db
+
+test-server/test_pb_data/data.db-shm
+
+test-server/test_pb_data/data.db-wal
