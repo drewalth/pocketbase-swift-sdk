@@ -6,253 +6,252 @@
 //
 
 import Foundation
-import Logging
+import os
 import Security
 
 // MARK: - SecureStorage
 
 public class SecureStorage: @unchecked Sendable {
 
-  // MARK: Public
+    // MARK: Public
 
-  /// Get user token
-  public var userToken: String? {
-    retrieveToken(for: Constants.userTokenKey)
-  }
-
-  /// Get user ID
-  public var userId: String? {
-    retrieveToken(for: Constants.userIdKey)
-  }
-
-  /// Get admin token
-  public var adminToken: String? {
-    retrieveToken(for: Constants.adminTokenKey)
-  }
-
-  /// Get admin ID
-  public var adminId: String? {
-    retrieveToken(for: Constants.adminIdKey)
-  }
-
-  /// Check if user is authenticated
-  public var isUserAuthenticated: Bool {
-    userToken != nil
-  }
-
-  /// Check if admin is authenticated
-  public var isAdminAuthenticated: Bool {
-    adminToken != nil
-  }
-
-  // MARK: - Public Methods
-
-  /// Store a token securely in the keychain
-  public func storeToken(_ token: String, for key: String) -> Bool {
-    // In test environment, use UserDefaults directly to avoid keychain entitlement issues
-    if isTestEnvironment {
-      UserDefaults.standard.set(token, forKey: "test_\(key)")
-      logger.info("Token stored in fallback storage for key: \(key) (test environment)")
-      return true
+    /// Get user token
+    public var userToken: String? {
+        retrieveToken(for: Constants.userTokenKey)
     }
 
-    // Try multiple accessibility levels for better compatibility
-    let accessibilityLevels: [CFString] = [
-      kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-      kSecAttrAccessibleWhenUnlocked,
-      kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
-      kSecAttrAccessibleAfterFirstUnlock,
-    ]
+    /// Get user ID
+    public var userId: String? {
+        retrieveToken(for: Constants.userIdKey)
+    }
 
-    for accessibilityLevel in accessibilityLevels {
-      let query: [String: Any] = [
-        kSecClass as String: kSecClassGenericPassword,
-        kSecAttrService as String: Constants.serviceName,
-        kSecAttrAccount as String: key,
-        kSecValueData as String: token.data(using: .utf8)!,
-        kSecAttrAccessible as String: accessibilityLevel,
-      ]
+    /// Get admin token
+    public var adminToken: String? {
+        retrieveToken(for: Constants.adminTokenKey)
+    }
 
-      // First, try to delete any existing item
-      SecItemDelete(query as CFDictionary)
+    /// Get admin ID
+    public var adminId: String? {
+        retrieveToken(for: Constants.adminIdKey)
+    }
 
-      // Then add the new item
-      let status = SecItemAdd(query as CFDictionary, nil)
+    /// Check if user is authenticated
+    public var isUserAuthenticated: Bool {
+        userToken != nil
+    }
 
-      if status == errSecSuccess {
-        logger.info("Token stored successfully for key: \(key) with accessibility: \(accessibilityLevel)")
-        return true
-      } else if status == errSecDuplicateItem {
-        // If item already exists, try to update it
-        let updateQuery: [String: Any] = [
-          kSecClass as String: kSecClassGenericPassword,
-          kSecAttrService as String: Constants.serviceName,
-          kSecAttrAccount as String: key,
-        ]
+    /// Check if admin is authenticated
+    public var isAdminAuthenticated: Bool {
+        adminToken != nil
+    }
 
-        let updateAttributes: [String: Any] = [
-          kSecValueData as String: token.data(using: .utf8)!,
-          kSecAttrAccessible as String: accessibilityLevel,
-        ]
+    // MARK: - Public Methods
 
-        let updateStatus = SecItemUpdate(updateQuery as CFDictionary, updateAttributes as CFDictionary)
-        if updateStatus == errSecSuccess {
-          logger.info("Token updated successfully for key: \(key) with accessibility: \(accessibilityLevel)")
-          return true
+    /// Store a token securely in the keychain
+    public func storeToken(_ token: String, for key: String) -> Bool {
+        // In test environment, use UserDefaults directly to avoid keychain entitlement issues
+        if isTestEnvironment {
+            UserDefaults.standard.set(token, forKey: "test_\(key)")
+            logger.info("Token stored in fallback storage for key: \(key) (test environment)")
+            return true
         }
-      }
+
+        // Try multiple accessibility levels for better compatibility
+        let accessibilityLevels: [CFString] = [
+            kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+            kSecAttrAccessibleWhenUnlocked,
+            kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+            kSecAttrAccessibleAfterFirstUnlock
+        ]
+
+        for accessibilityLevel in accessibilityLevels {
+            let query: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: Constants.serviceName,
+                kSecAttrAccount as String: key,
+                kSecValueData as String: token.data(using: .utf8)!,
+                kSecAttrAccessible as String: accessibilityLevel
+            ]
+
+            // First, try to delete any existing item
+            SecItemDelete(query as CFDictionary)
+
+            // Then add the new item
+            let status = SecItemAdd(query as CFDictionary, nil)
+
+            if status == errSecSuccess {
+                logger.info("Token stored successfully for key: \(key) with accessibility: \(accessibilityLevel)")
+                return true
+            } else if status == errSecDuplicateItem {
+                // If item already exists, try to update it
+                let updateQuery: [String: Any] = [
+                    kSecClass as String: kSecClassGenericPassword,
+                    kSecAttrService as String: Constants.serviceName,
+                    kSecAttrAccount as String: key
+                ]
+
+                let updateAttributes: [String: Any] = [
+                    kSecValueData as String: token.data(using: .utf8)!,
+                    kSecAttrAccessible as String: accessibilityLevel
+                ]
+
+                let updateStatus = SecItemUpdate(updateQuery as CFDictionary, updateAttributes as CFDictionary)
+                if updateStatus == errSecSuccess {
+                    logger.info("Token updated successfully for key: \(key) with accessibility: \(accessibilityLevel)")
+                    return true
+                }
+            }
+        }
+
+        logger.error("Failed to store token for key: \(key) in keychain")
+        return false
     }
 
-    logger.error("Failed to store token for key: \(key) in keychain")
-    return false
-  }
+    /// Retrieve a token from the keychain
+    public func retrieveToken(for key: String) -> String? {
+        // In test environment, check UserDefaults first
+        if isTestEnvironment {
+            if let fallbackToken = UserDefaults.standard.string(forKey: "test_\(key)") {
+                logger.info("Token retrieved from fallback storage for key: \(key) (test environment)")
+                return fallbackToken
+            }
+            logger.warning("No token found in fallback storage for key: \(key) (test environment)")
+            return nil
+        }
 
-  /// Retrieve a token from the keychain
-  public func retrieveToken(for key: String) -> String? {
-    // In test environment, check UserDefaults first
-    if isTestEnvironment {
-      if let fallbackToken = UserDefaults.standard.string(forKey: "test_\(key)") {
-        logger.info("Token retrieved from fallback storage for key: \(key) (test environment)")
-        return fallbackToken
-      }
-      logger.warning("No token found in fallback storage for key: \(key) (test environment)")
-      return nil
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: Constants.serviceName,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        if
+            status == errSecSuccess,
+            let data = result as? Data,
+            let token = String(data: data, encoding: .utf8) {
+            logger.info("Token retrieved successfully for key: \(key)")
+            return token
+        } else {
+            logger.warning("No token found in keychain for key: \(key), status: \(status)")
+            return nil
+        }
     }
 
-    let query: [String: Any] = [
-      kSecClass as String: kSecClassGenericPassword,
-      kSecAttrService as String: Constants.serviceName,
-      kSecAttrAccount as String: key,
-      kSecReturnData as String: true,
-      kSecMatchLimit as String: kSecMatchLimitOne,
-    ]
+    /// Delete a token from the keychain
+    public func deleteToken(for key: String) -> Bool {
+        // In test environment, only delete from UserDefaults
+        if isTestEnvironment {
+            UserDefaults.standard.removeObject(forKey: "test_\(key)")
+            logger.info("Token deleted from fallback storage for key: \(key) (test environment)")
+            return true
+        }
 
-    var result: AnyObject?
-    let status = SecItemCopyMatching(query as CFDictionary, &result)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: Constants.serviceName,
+            kSecAttrAccount as String: key
+        ]
 
-    if
-      status == errSecSuccess,
-      let data = result as? Data,
-      let token = String(data: data, encoding: .utf8)
-    {
-      logger.info("Token retrieved successfully for key: \(key)")
-      return token
-    } else {
-      logger.warning("No token found in keychain for key: \(key), status: \(status)")
-      return nil
-    }
-  }
+        let status = SecItemDelete(query as CFDictionary)
+        let keychainDeleted = status == errSecSuccess || status == errSecItemNotFound
 
-  /// Delete a token from the keychain
-  public func deleteToken(for key: String) -> Bool {
-    // In test environment, only delete from UserDefaults
-    if isTestEnvironment {
-      UserDefaults.standard.removeObject(forKey: "test_\(key)")
-      logger.info("Token deleted from fallback storage for key: \(key) (test environment)")
-      return true
+        if keychainDeleted {
+            logger.info("Token deleted successfully from keychain for key: \(key)")
+        } else {
+            logger.warning("Failed to delete token from keychain for key: \(key), status: \(status)")
+        }
+
+        return keychainDeleted
     }
 
-    let query: [String: Any] = [
-      kSecClass as String: kSecClassGenericPassword,
-      kSecAttrService as String: Constants.serviceName,
-      kSecAttrAccount as String: key,
-    ]
+    /// Clear all stored tokens
+    public func clearAllTokens() {
+        let keys = [
+            Constants.userTokenKey,
+            Constants.userIdKey,
+            Constants.adminTokenKey,
+            Constants.adminIdKey
+        ]
 
-    let status = SecItemDelete(query as CFDictionary)
-    let keychainDeleted = status == errSecSuccess || status == errSecItemNotFound
+        for key in keys {
+            _ = deleteToken(for: key)
+        }
 
-    if keychainDeleted {
-      logger.info("Token deleted successfully from keychain for key: \(key)")
-    } else {
-      logger.warning("Failed to delete token from keychain for key: \(key), status: \(status)")
+        logger.info("All tokens cleared from keychain and fallback storage")
     }
 
-    return keychainDeleted
-  }
+    /// Clear all fallback storage (useful for testing)
+    public func clearFallbackStorage() {
+        let keys = [
+            Constants.userTokenKey,
+            Constants.userIdKey,
+            Constants.adminTokenKey,
+            Constants.adminIdKey
+        ]
 
-  /// Clear all stored tokens
-  public func clearAllTokens() {
-    let keys = [
-      Constants.userTokenKey,
-      Constants.userIdKey,
-      Constants.adminTokenKey,
-      Constants.adminIdKey,
-    ]
+        for key in keys {
+            UserDefaults.standard.removeObject(forKey: "test_\(key)")
+        }
 
-    for key in keys {
-      _ = deleteToken(for: key)
+        logger.info("All fallback storage cleared")
     }
 
-    logger.info("All tokens cleared from keychain and fallback storage")
-  }
+    // MARK: - Convenience Methods
 
-  /// Clear all fallback storage (useful for testing)
-  public func clearFallbackStorage() {
-    let keys = [
-      Constants.userTokenKey,
-      Constants.userIdKey,
-      Constants.adminTokenKey,
-      Constants.adminIdKey,
-    ]
-
-    for key in keys {
-      UserDefaults.standard.removeObject(forKey: "test_\(key)")
+    /// Store user token and ID
+    public func storeUserToken(_ token: String, userId: String) -> Bool {
+        let tokenStored = storeToken(token, for: Constants.userTokenKey)
+        let idStored = storeToken(userId, for: Constants.userIdKey)
+        return tokenStored && idStored
     }
 
-    logger.info("All fallback storage cleared")
-  }
+    /// Store admin token and ID
+    public func storeAdminToken(_ token: String, adminId: String) -> Bool {
+        let tokenStored = storeToken(token, for: Constants.adminTokenKey)
+        let idStored = storeToken(adminId, for: Constants.adminIdKey)
+        return tokenStored && idStored
+    }
 
-  // MARK: - Convenience Methods
+    /// Clear user authentication
+    public func clearUserAuth() {
+        _ = deleteToken(for: Constants.userTokenKey)
+        _ = deleteToken(for: Constants.userIdKey)
+        logger.info("User authentication cleared")
+    }
 
-  /// Store user token and ID
-  public func storeUserToken(_ token: String, userId: String) -> Bool {
-    let tokenStored = storeToken(token, for: Constants.userTokenKey)
-    let idStored = storeToken(userId, for: Constants.userIdKey)
-    return tokenStored && idStored
-  }
+    /// Clear admin authentication
+    public func clearAdminAuth() {
+        _ = deleteToken(for: Constants.adminTokenKey)
+        _ = deleteToken(for: Constants.adminIdKey)
+        logger.info("Admin authentication cleared")
+    }
 
-  /// Store admin token and ID
-  public func storeAdminToken(_ token: String, adminId: String) -> Bool {
-    let tokenStored = storeToken(token, for: Constants.adminTokenKey)
-    let idStored = storeToken(adminId, for: Constants.adminIdKey)
-    return tokenStored && idStored
-  }
+    // MARK: Private
 
-  /// Clear user authentication
-  public func clearUserAuth() {
-    _ = deleteToken(for: Constants.userTokenKey)
-    _ = deleteToken(for: Constants.userIdKey)
-    logger.info("User authentication cleared")
-  }
+    // MARK: - Constants
 
-  /// Clear admin authentication
-  public func clearAdminAuth() {
-    _ = deleteToken(for: Constants.adminTokenKey)
-    _ = deleteToken(for: Constants.adminIdKey)
-    logger.info("Admin authentication cleared")
-  }
+    private enum Constants {
+        static let userTokenKey = "pocketbase_user_token"
+        static let userIdKey = "pocketbase_user_id"
+        static let adminTokenKey = "pocketbase_admin_token"
+        static let adminIdKey = "pocketbase_admin_id"
+        static let serviceName = "io.pocketbase.swift.sdk"
+    }
 
-  // MARK: Private
+    private let logger = Logger(category: "SecureStorage")
 
-  // MARK: - Constants
-
-  private enum Constants {
-    static let userTokenKey = "pocketbase_user_token"
-    static let userIdKey = "pocketbase_user_id"
-    static let adminTokenKey = "pocketbase_admin_token"
-    static let adminIdKey = "pocketbase_admin_id"
-    static let serviceName = "io.pocketbase.swift.sdk"
-  }
-
-  private let logger = Logger(label: "SecureStorage")
-
-  /// Check if we're running in a test environment
-  private var isTestEnvironment: Bool {
-    #if DEBUG
-    return ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-    #else
-    return false
-    #endif
-  }
+    /// Check if we're running in a test environment
+    private var isTestEnvironment: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        #else
+        return false
+        #endif
+    }
 
 }

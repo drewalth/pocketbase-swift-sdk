@@ -1,0 +1,22 @@
+type_name:
+  allowed_symbols: "_"
+identifier_name:
+  min_length: 2
+line_length:
+  warning: 220
+  error: 250
+
+excluded:
+  - .build
+  - .swiftpm
+  - .git
+  - .github
+  - .vscode
+  - .swiftformat
+  - .swiftlint.yml
+  - .swiftpackage
+  - .swiftpackage.resolved
+
+disabled_rules:
+  - non_optional_string_data_conversion
+  - optional_data_string_conversion

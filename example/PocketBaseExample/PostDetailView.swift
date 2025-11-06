@@ -9,20 +9,20 @@ import SwiftUI
 
 struct PostDetailView: View {
 
-  private let post: Post
+    private let post: Post
 
-  init(post: Post) {
-    self.post = post
-  }
+    init(post: Post) {
+        self.post = post
+    }
 
-  var body: some View {
-    VStack {
-      VStack(alignment: .leading) {
-        Text("ID: \(post.id)")
-        Text("Created: \(post.created)")
-        Text("Updated: \(post.updated)")
-      }
-    }.navigationTitle(post.title)
-      .navigationBarTitleDisplayMode(.inline)
-  }
+    var body: some View {
+        VStack {
+            VStack(alignment: .leading) {
+                Text("ID: \(post.id)")
+                Text("Created: \(post.created)")
+                Text("Updated: \(post.updated)")
+            }
+        }.navigationTitle(post.title)
+        .navigationBarTitleDisplayMode(.inline)
+    }
 }

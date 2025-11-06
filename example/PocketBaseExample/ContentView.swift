@@ -8,17 +8,13 @@
 import PocketBase
 import SwiftUI
 
-
-
 struct ContentView: View {
 
-
-
-  var body: some View {
-    PostsListView()
-  }
+    var body: some View {
+        PostsListView()
+    }
 }
 
 #Preview {
-  ContentView()
+    ContentView()
 }
