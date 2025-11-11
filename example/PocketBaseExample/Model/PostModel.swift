@@ -7,6 +7,8 @@
 
 import PocketBase
 
+// MARK: - Post
+
 public struct Post: PBBaseRecord, Decodable, Encodable, Sendable, Identifiable {
 
     // MARK: Lifecycle
@@ -42,3 +44,7 @@ public struct Post: PBBaseRecord, Decodable, Encodable, Sendable, Identifiable {
         case updated
     }
 }
+
+// MARK: Equatable
+
+extension Post: Equatable { }

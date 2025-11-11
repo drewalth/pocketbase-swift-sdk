@@ -8,13 +8,33 @@
 import PocketBase
 import SwiftUI
 
+// MARK: - ContentView
+
 struct ContentView: View {
 
     var body: some View {
-        PostsListView()
+        TabView {
+            PostsListView()
+                .tag(Tabs.postList)
+                .tabItem {
+                    Label("Posts", systemImage: "list.bullet")
+                }
+            AuthView()
+                .tag(Tabs.auth)
+                .tabItem {
+                    Label("Auth", systemImage: "person.fill")
+                }
+        }
     }
 }
 
 #Preview {
     ContentView()
+}
+
+// MARK: - Tabs
+
+enum Tabs {
+    case postList
+    case auth
 }

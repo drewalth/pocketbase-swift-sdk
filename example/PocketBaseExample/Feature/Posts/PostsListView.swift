@@ -5,6 +5,7 @@
 //  Created by Andrew Althage on 8/2/25.
 //
 
+import Loadable
 import PocketBase
 import SwiftUI
 
@@ -29,7 +30,9 @@ struct PostsListView: View {
                         Text("Realtime server \(connected ? "connected" : "disconnected")")
                     }
                 }
-            }.navigationTitle("Posts")
+            }.listStyle(.insetGrouped)
+            .listRowSpacing(8)
+            .navigationTitle("Posts")
             .task {
                 await loadPosts()
             }.onAppear {
@@ -45,7 +48,7 @@ struct PostsListView: View {
 
     // MARK: Private
 
-    @State private var postsData: Loadable<[Post]> = .initial([])
+    @State private var postsData: Loadable<[Post]> = .initial
     @State private var realtime: Realtime<Post>?
     @State private var connected = false
 

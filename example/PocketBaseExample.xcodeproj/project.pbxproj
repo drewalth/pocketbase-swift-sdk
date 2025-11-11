@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		A145E3452E3E9C4A00A8B378 /* PocketBase in Frameworks */ = {isa = PBXBuildFile; productRef = A145E3442E3E9C4A00A8B378 /* PocketBase */; };
+		A1A666D22EC3B71B00862426 /* Loadable in Frameworks */ = {isa = PBXBuildFile; productRef = A1A666D12EC3B71B00862426 /* Loadable */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1A666D22EC3B71B00862426 /* Loadable in Frameworks */,
 				A145E3452E3E9C4A00A8B378 /* PocketBase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -71,6 +73,7 @@
 			name = PocketBaseExample;
 			packageProductDependencies = (
 				A145E3442E3E9C4A00A8B378 /* PocketBase */,
+				A1A666D12EC3B71B00862426 /* Loadable */,
 			);
 			productName = PocketBaseExample;
 			productReference = A145E3352E3E9C2F00A8B378 /* PocketBaseExample.app */;
@@ -102,6 +105,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				A145E3432E3E9C4A00A8B378 /* XCLocalSwiftPackageReference "../../pocketbase-swift-sdk" */,
+				A1A666D02EC3B71B00862426 /* XCRemoteSwiftPackageReference "swift-loadable" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A145E3362E3E9C2F00A8B378 /* Products */;
@@ -260,6 +264,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2BTKYF3W9D;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -287,6 +292,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2BTKYF3W9D;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -337,10 +343,26 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		A1A666D02EC3B71B00862426 /* XCRemoteSwiftPackageReference "swift-loadable" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/drewalth/swift-loadable.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		A145E3442E3E9C4A00A8B378 /* PocketBase */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = PocketBase;
+		};
+		A1A666D12EC3B71B00862426 /* Loadable */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1A666D02EC3B71B00862426 /* XCRemoteSwiftPackageReference "swift-loadable" */;
+			productName = Loadable;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

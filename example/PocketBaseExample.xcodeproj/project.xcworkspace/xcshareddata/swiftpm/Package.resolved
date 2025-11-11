@@ -1,5 +1,5 @@
 {
-  "originHash" : "cb1c97d0e2d539d507e6ba50ba9065f703650bfd8805e749997a21ad4ea75396",
+  "originHash" : "0bcb02154f34f833d159b5808c5720049b777a475ceefea5a735dc345c9a1262",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -13,10 +13,19 @@
     {
       "identity" : "eventsource",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/inaka/EventSource.git",
+      "location" : "https://github.com/Recouse/EventSource.git",
       "state" : {
-        "branch" : "master",
-        "revision" : "78934b361891c7d0fa3d399d128e959f0c94d267"
+        "revision" : "7b2f4f585d3927876bd76eaede9fdff779eff102",
+        "version" : "0.1.5"
+      }
+    },
+    {
+      "identity" : "swift-loadable",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/drewalth/swift-loadable.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "4cf12aed9e06f0d718978adec74e08f4f1f065aa"
       }
     }
   ],
