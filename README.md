@@ -1,8 +1,8 @@
 # Pocketbase Swift SDK
 
-A Swift SDK for [Pocketbase](https://pocketbase.io/) v0.32.0.
+A Swift SDK for [Pocketbase](https://pocketbase.io/) v0.37.3.
 
-[![Build](https://github.com/drewalth/pocketbase-swift-sdk/actions/workflows/main.yaml/badge.svg)](https://github.com/drewalth/pocketbase-swift-sdk/actions/workflows/main.yaml) [![Swift](https://img.shields.io/badge/Swift-6.0-orange?style=flat-square)](https://img.shields.io/badge/Swift-6.0-Orange?style=flat-square)
+[![CI](https://github.com/drewalth/pocketbase-swift-sdk/actions/workflows/ci.yaml/badge.svg)](https://github.com/drewalth/pocketbase-swift-sdk/actions/workflows/ci.yaml) [![Swift](https://img.shields.io/badge/Swift-6.0-orange?style=flat-square)](https://img.shields.io/badge/Swift-6.0-Orange?style=flat-square)
 [![Platforms](https://img.shields.io/badge/Platforms-macOS_iOS-yellowgreen?style=flat-square)](https://img.shields.io/badge/Platforms-macOS_iOS-YellowGreen?style=flat-square)
 
 

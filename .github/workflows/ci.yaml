@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  GO_VERSION: "1.25.0"
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: test-server/go.sum
+      - name: Cache test server binary
+        id: cache-server
+        uses: actions/cache@v4
+        with:
+          path: test-server/testserver
+          key: testserver-${{ runner.os }}-${{ hashFiles('test-server/go.mod', 'test-server/go.sum', 'test-server/**/*.go') }}
+      - name: Build Test Pocketbase Server
+        if: steps.cache-server.outputs.cache-hit != 'true'
+        run: go build -o testserver -v .
+        working-directory: ./test-server
+      - name: Set up Swift
+        uses: swift-actions/setup-swift@v2.3.0
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - name: Preflight
+        run: make preflight
+      - name: Find iOS Simulator
+        id: simulator
+        run: |
+          # Get first available iPhone simulator name
+          SIMULATOR_NAME=$(xcrun simctl list devices available | grep "iPhone" | head -1 | sed 's/^ *//' | cut -d'(' -f1 | xargs)
+          echo "simulator_name=$SIMULATOR_NAME" >> $GITHUB_OUTPUT
+          echo "Selected: $SIMULATOR_NAME"
+      - name: Build Example iOS App
+        run: |
+          xcodebuild build \
+            -project example/PocketBaseExample.xcodeproj \
+            -scheme PocketBaseExample \
+            -destination "platform=iOS Simulator,name=${{ steps.simulator.outputs.simulator_name }}" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO

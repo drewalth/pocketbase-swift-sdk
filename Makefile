@@ -13,10 +13,14 @@ preflight:
 	@echo "All checks passed"
 
 test_ci:
-	$(MAKE) start_test_server & sleep 10 && xcrun swift package clean && xcrun swift test
+	$(MAKE) start_test_server_fresh & sleep 10 && xcrun swift package clean && xcrun swift test
 
 start_test_server:
-	cd ./test-server && go run . serve --dir="./test_pb_data"
+	cd ./test-server && ./testserver serve --dir="./test_pb_data"
+
+start_test_server_fresh:
+	rm -rf ./test-server/test_pb_data
+	$(MAKE) start_test_server
 
 setup:
 	$(MAKE) install_homebrew
@@ -39,5 +43,4 @@ install_go: install_homebrew
 install_go_dependencies:
 	cd ./test-server && go get ./...
 
-.PHONY: pretty lint preflight start_test_server setup install_swiftlint install_swiftformat install_go_dependencies install_homebrew install_go
-
+.PHONY: pretty lint preflight start_test_server start_test_server_fresh test_ci setup install_swiftlint install_swiftformat install_go_dependencies install_homebrew install_go
