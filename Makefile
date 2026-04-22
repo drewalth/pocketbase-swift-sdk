@@ -16,7 +16,7 @@ test_ci:
 	$(MAKE) start_test_server_fresh & sleep 10 && xcrun swift package clean && xcrun swift test
 
 start_test_server:
-	cd ./test-server && go run . serve --dir="./test_pb_data"
+	cd ./test-server && ./testserver serve --dir="./test_pb_data"
 
 start_test_server_fresh:
 	rm -rf ./test-server/test_pb_data
