@@ -18,3 +18,4 @@ test-server/test_pb_data/data.db
 test-server/test_pb_data/data.db-shm
 
 test-server/test_pb_data/data.db-wal
+test-server/testserver
