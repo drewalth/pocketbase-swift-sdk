@@ -1,8 +1,14 @@
-name: Build
+name: CI
 
 on:
   push:
     branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   GO_VERSION: "1.24.3"
@@ -24,7 +30,7 @@ jobs:
         working-directory: ./test-server
       - name: Set up Swift
         uses: swift-actions/setup-swift@v2.3.0
-      - name: Install Swiftlint
+      - name: Install SwiftLint
         run: brew install swiftlint
       - name: Preflight
         run: make preflight
