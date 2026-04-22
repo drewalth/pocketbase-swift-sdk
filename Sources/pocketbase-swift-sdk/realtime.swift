@@ -65,7 +65,6 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
     }
 
     deinit {
-        dataTask?.cancel(urlSession: URLSession.shared)
         subscriptionTask?.cancel()
     }
 
@@ -121,7 +120,7 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
     }
 
     public func unsubscribe() {
-        dataTask?.cancel(urlSession: .shared)
+        subscriptionTask?.cancel()
         connected = false
         onDisconnect()
     }
