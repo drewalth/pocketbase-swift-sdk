@@ -31,7 +31,7 @@ func init() {
 		}
 
 		// 2) Create the `posts` collection.
-		//    title (required text), author (required relation -> users, cascade delete).
+		//    title (required text), author (optional relation -> users, cascade delete).
 		//    All CRUD rules are public; tighten when tests carry auth tokens.
 		posts := core.NewBaseCollection("posts")
 		posts.Fields.Add(
@@ -41,10 +41,20 @@ func init() {
 			},
 			&core.RelationField{
 				Name:          "author",
-				Required:      true,
+				Required:      false,
 				CollectionId:  users.Id,
 				CascadeDelete: true,
 				MaxSelect:     1,
+			},
+			&core.AutodateField{
+				Name:     "created",
+				OnCreate: true,
+				OnUpdate: false,
+			},
+			&core.AutodateField{
+				Name:     "updated",
+				OnCreate: true,
+				OnUpdate: true,
 			},
 		)
 

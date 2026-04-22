@@ -30,7 +30,19 @@ func init() {
 		user.Set("password", "supersecret")
 		user.Set("name", "Test User")
 		user.Set("verified", true)
-		return app.Save(user)
+		if err := app.Save(user); err != nil {
+			return err
+		}
+
+		// 3) Seed a sample post so tests that call getList() find at least one record.
+		posts, err := app.FindCollectionByNameOrId("posts")
+		if err != nil {
+			return err
+		}
+		post := core.NewRecord(posts)
+		post.Set("title", "Hello World")
+		post.Set("author", user.Id)
+		return app.Save(post)
 	}, func(app core.App) error {
 		// down: delete by email; no-op if not found.
 		deleteByEmail := func(collectionName, email string) error {
