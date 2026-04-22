@@ -40,3 +40,18 @@ jobs:
         run: brew install swiftlint
       - name: Preflight
         run: make preflight
+      - name: Find iOS Simulator
+        id: simulator
+        run: |
+          # Get first available iPhone simulator name
+          SIMULATOR_NAME=$(xcrun simctl list devices available | grep "iPhone" | head -1 | sed 's/^ *//' | cut -d'(' -f1 | xargs)
+          echo "simulator_name=$SIMULATOR_NAME" >> $GITHUB_OUTPUT
+          echo "Selected: $SIMULATOR_NAME"
+      - name: Build Example iOS App
+        run: |
+          xcodebuild build \
+            -project example/PocketBaseExample.xcodeproj \
+            -scheme PocketBaseExample \
+            -destination "platform=iOS Simulator,name=${{ steps.simulator.outputs.simulator_name }}" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO
