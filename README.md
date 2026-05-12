@@ -114,7 +114,7 @@ The SDK provides comprehensive authentication functionality with generic support
 ```swift
 // Sign up a new user
 let createUserDto = CreateUser(
-    email: "new@drewalth.com",
+    email: "user@example.com",
     name: "Test User",
     password: "password123",
     passwordConfirm: "password123")
