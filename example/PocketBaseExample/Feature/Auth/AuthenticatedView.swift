@@ -175,7 +175,10 @@ struct AuthenticatedView: View {
     @State private var errorMessage: String?
 
     private func loadCurrentUser() async {
-        guard let pb = pocketBase, let userId = pb.currentUserId else { return }
+        guard let pb = pocketBase, let userId = pb.currentUserId else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
 
         do {
             let userCollection: Collection<User> = pb.collection("users")
@@ -188,7 +191,10 @@ struct AuthenticatedView: View {
     }
 
     private func refreshToken() async {
-        guard let pb = pocketBase else { return }
+        guard let pb = pocketBase else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
         isRefreshing = true
         errorMessage = nil
 
@@ -205,7 +211,10 @@ struct AuthenticatedView: View {
     }
 
     private func loadAuthMethods() async {
-        guard let pb = pocketBase else { return }
+        guard let pb = pocketBase else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
         isLoadingAuthMethods = true
         errorMessage = nil
 

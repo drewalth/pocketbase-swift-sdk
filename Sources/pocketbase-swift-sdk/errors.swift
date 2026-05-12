@@ -9,8 +9,6 @@ import Foundation
 
 public enum PBError: Error, LocalizedError {
     case missingEnvironment
-    case notAuthenticated
-    case fetchCancelled
 
     // MARK: Public
 
@@ -18,10 +16,6 @@ public enum PBError: Error, LocalizedError {
         switch self {
         case .missingEnvironment:
             "PocketBase instance not found in SwiftUI environment. Use .environment(\\.pocketBase, pocketBase) in your App."
-        case .notAuthenticated:
-            "User is not authenticated."
-        case .fetchCancelled:
-            "Fetch was cancelled."
         }
     }
 }

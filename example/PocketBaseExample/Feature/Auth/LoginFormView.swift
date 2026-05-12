@@ -68,7 +68,10 @@ struct LoginFormView: View {
     @State private var errorMessage: String?
 
     private func login() async {
-        guard let pb = pocketBase else { return }
+        guard let pb = pocketBase else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
         isLoading = true
         errorMessage = nil
 

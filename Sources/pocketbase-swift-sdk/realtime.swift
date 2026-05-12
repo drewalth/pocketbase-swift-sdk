@@ -101,6 +101,8 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
                     logger.info("Realtime connection initiated.")
                 case .error(let error):
                     logger.error("\(error.localizedDescription)")
+                    connected = false
+                    onDisconnect()
                 case .event(let event):
                     if event.event == "PB_CONNECT" {
                         logger.info("Realtime connection established.")
@@ -220,6 +222,8 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
             logger.info("Subscribed")
         } catch {
             logger.error("Error subscribing to record: \(error.localizedDescription)")
+            connected = false
+            onDisconnect()
         }
     }
 

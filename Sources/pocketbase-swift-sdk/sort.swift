@@ -24,6 +24,7 @@ public struct PBSortDescriptor<T>: Equatable, Hashable, Sendable {
     }
 
     public init(_ fieldName: String, order: PBSortOrder = .forward) {
+        precondition(!fieldName.isEmpty, "PBSortDescriptor fieldName must not be empty")
         self.fieldName = fieldName
         self.order = order
     }
@@ -42,6 +43,9 @@ public struct PBSortDescriptor<T>: Equatable, Hashable, Sendable {
 
     // MARK: Private
 
+    // Relies on String(describing: keyPath) producing the "\TypeName.property" format.
+    // If Swift changes KeyPath's description format in a future version, this may silently
+    // produce incorrect field names. Use the String-based init as an escape hatch.
     private static func extractFieldName<V>(from keyPath: KeyPath<T, V>) -> String {
         let description = String(describing: keyPath)
         guard let backslashIndex = description.firstIndex(of: "\\") else {

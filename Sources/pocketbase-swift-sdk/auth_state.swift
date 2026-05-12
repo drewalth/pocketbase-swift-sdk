@@ -8,9 +8,17 @@
 
     // MARK: - PBAuthInfo
 
-    public struct PBAuthInfo {
-        public let isAuthenticated: Bool
-        public let userId: String?
+    public enum PBAuthInfo {
+        case authenticated(userId: String)
+        case notAuthenticated
+
+        public var isAuthenticated: Bool {
+            if case .authenticated = self { true } else { false }
+        }
+
+        public var userId: String? {
+            if case .authenticated(let id) = self { id } else { nil }
+        }
     }
 
     // MARK: - PBAuthProjection
@@ -40,7 +48,11 @@
         // MARK: Public
 
         public var wrappedValue: PBAuthInfo {
-            PBAuthInfo(isAuthenticated: isAuthenticated, userId: userId)
+            if isAuthenticated, let userId {
+                .authenticated(userId: userId)
+            } else {
+                .notAuthenticated
+            }
         }
 
         public var projectedValue: PBAuthProjection {

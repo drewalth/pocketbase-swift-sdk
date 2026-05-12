@@ -80,7 +80,11 @@ struct PostsListView: View {
         }, onEvent: { event in
             print("Received event: \(event.action) for record: \(event.record.id)")
         })
-        try? await realtime?.subscribe()
+        do {
+            try await realtime?.subscribe()
+        } catch {
+            print("Error connecting to realtime: \(error)")
+        }
     }
 }
 

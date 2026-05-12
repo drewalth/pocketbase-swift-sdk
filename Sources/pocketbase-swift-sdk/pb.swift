@@ -79,6 +79,9 @@ public struct PasswordAuthentication: PBCollection {
 
 // MARK: - PocketBase
 
+// @unchecked Sendable: Alamofire.Session is internally thread-safe (uses serial dispatch queue).
+// SecureStorage uses Keychain which is OS-level thread-safe. All stored properties are either
+// value types or immutable after init.
 public class PocketBase: @unchecked Sendable {
 
     // MARK: Lifecycle
@@ -202,7 +205,7 @@ public class PocketBase: @unchecked Sendable {
     // MARK: Internal
 
     let baseURL: String
-    var httpClient: HttpClient
+    let httpClient: HttpClient
     let secureStorage = SecureStorage()
     let logger = Logger(category: "PocketBase")
 

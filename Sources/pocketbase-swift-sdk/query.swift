@@ -17,6 +17,8 @@
 
     // MARK: - QueryStorage
 
+    // @unchecked Sendable: all access is exclusively from @MainActor via PBQuery's @State storage.
+    // No internal synchronization is needed.
     private final class QueryStorage<T: PBCollection>: @unchecked Sendable {
         var items: [T] = []
         var isLoading = false
@@ -98,6 +100,10 @@
                 return
             }
 
+            if (storage.error as? PBError) == .missingEnvironment {
+                storage.error = nil
+            }
+
             let newHash = computeConfigHash()
             let tokenChanged = storage.refreshToken != storage.lastRefreshToken
 
@@ -112,6 +118,11 @@
 
             storage.configHash = newHash
             storage.fetchTask?.cancel()
+
+            if configChanged {
+                storage.realtimeSubscription?.unsubscribe()
+                storage.realtimeSubscription = nil
+            }
 
             let s = storage
             let name = collectionName
@@ -173,6 +184,7 @@
             perPage: Int,
             realtime: Bool
         ) async {
+            let logger = Logger(category: "PBQuery")
             storage.isLoading = true
             storage.error = nil
             defer { storage.isLoading = false }
@@ -188,8 +200,10 @@
                 )
                 storage.items = result.items
             } catch is CancellationError {
+                logger.debug("Fetch cancelled for collection '\(collection)'")
                 return
             } catch {
+                logger.error("Fetch failed for collection '\(collection)': \(error.localizedDescription)")
                 storage.error = error
             }
 
@@ -221,7 +235,8 @@
                 record: "*",
                 onConnect: {},
                 onDisconnect: {},
-                onEvent: { _ in
+                onEvent: { [weak storage] _ in
+                    guard let storage else { return }
                     Task { @MainActor [weak storage] in
                         guard let storage else { return }
                         storage.fetchTask?.cancel()

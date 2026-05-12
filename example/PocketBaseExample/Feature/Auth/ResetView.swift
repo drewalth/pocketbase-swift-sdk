@@ -107,7 +107,10 @@ struct ResetView: View {
     @State private var selectedAction: ResetAction = .passwordReset
 
     private func performAction() async {
-        guard let pb = pocketBase else { return }
+        guard let pb = pocketBase else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
         isLoading = true
         errorMessage = nil
 
