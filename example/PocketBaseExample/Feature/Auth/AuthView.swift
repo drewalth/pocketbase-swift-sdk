@@ -35,7 +35,7 @@ struct AuthView: View {
             }
         }
         .onAppear {
-            isAuthenticated = pocketBase.isAuthenticated
+            isAuthenticated = pocketBase?.isAuthenticated ?? false
         }
         .onChange(of: isAuthenticated) { _, newValue in
             // Clear navigation path when auth state changes

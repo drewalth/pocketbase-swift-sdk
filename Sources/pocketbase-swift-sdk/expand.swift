@@ -8,7 +8,7 @@
 // MARK: - ExpandQuery
 
 /// Represents a PocketBase expand query with support for nested expansions
-public struct ExpandQuery {
+public struct ExpandQuery: Sendable {
 
     // MARK: Lifecycle
 

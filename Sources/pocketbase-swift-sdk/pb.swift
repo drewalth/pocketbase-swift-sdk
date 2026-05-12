@@ -79,7 +79,7 @@ public struct PasswordAuthentication: PBCollection {
 
 // MARK: - PocketBase
 
-public class PocketBase {
+public class PocketBase: @unchecked Sendable {
 
     // MARK: Lifecycle
 
@@ -119,6 +119,7 @@ public class PocketBase {
         model _: T.Type,
         expand: ExpandQuery? = nil,
         filters: FiltersQuery? = nil,
+        sort: String? = nil,
         page: Int = 1,
         perPage: Int = 100)
     async throws -> PBListResponse<T> {
@@ -135,6 +136,10 @@ public class PocketBase {
 
             if let filters, !filters.isEmpty {
                 baseQueryItems.append(URLQueryItem(name: "filter", value: filters.queryString))
+            }
+
+            if let sort {
+                baseQueryItems.append(URLQueryItem(name: "sort", value: sort))
             }
 
             return baseQueryItems
@@ -245,6 +250,7 @@ public class Collection<T: PBCollection> {
     public func getList(
         expand: ExpandQuery? = nil,
         filters: FiltersQuery? = nil,
+        sort: PBSortQuery<T>? = nil,
         page: Int = 1,
         perPage: Int = 100)
     async throws -> PBListResponse<T> {
@@ -261,6 +267,10 @@ public class Collection<T: PBCollection> {
 
             if let filters, !filters.isEmpty {
                 baseQueryItems.append(URLQueryItem(name: "filter", value: filters.queryString))
+            }
+
+            if let sort, !sort.isEmpty {
+                baseQueryItems.append(URLQueryItem(name: "sort", value: sort.queryString))
             }
 
             return baseQueryItems

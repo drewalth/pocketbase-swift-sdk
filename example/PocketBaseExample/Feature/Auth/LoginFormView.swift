@@ -68,11 +68,12 @@ struct LoginFormView: View {
     @State private var errorMessage: String?
 
     private func login() async {
+        guard let pb = pocketBase else { return }
         isLoading = true
         errorMessage = nil
 
         do {
-            let authResult = try await pocketBase.authWithPassword(
+            let authResult = try await pb.authWithPassword(
                 email: email,
                 password: password,
                 userType: User.self)

@@ -164,7 +164,10 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
                 return
             }
             let decoder = JSONDecoder()
-            let jsonData = data.data(using: .utf8)!
+            guard let jsonData = data.data(using: .utf8) else {
+                logger.error("PB_CONNECT data is not valid UTF-8")
+                return
+            }
             let pbConnect = try decoder.decode(PBCONNECT.self, from: jsonData)
             clientID = pbConnect.clientId
         } catch {
@@ -180,7 +183,10 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
             }
 
             let decoder = JSONDecoder()
-            let jsonData = data.data(using: .utf8)!
+            guard let jsonData = data.data(using: .utf8) else {
+                logger.error("Realtime event data is not valid UTF-8")
+                return
+            }
 
             // Decode the realtime event
             let realtimeEvent = try decoder.decode(RealtimeEvent<T>.self, from: jsonData)
@@ -199,8 +205,10 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
         }
 
         let realtimeURL = "\(baseURL)/api/realtime"
-        let urlComps = URLComponents(string: realtimeURL)!
-        let url = urlComps.url!
+        guard let urlComps = URLComponents(string: realtimeURL), let url = urlComps.url else {
+            logger.error("Invalid realtime URL: \(realtimeURL)")
+            return
+        }
 
         let parameters: [String: Any] = [
             "clientId": clientID,
@@ -211,7 +219,7 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
             _ = try await sendPostRequest(url: url, parameters: parameters)
             logger.info("Subscribed")
         } catch {
-            logger.error("Error: \(error)")
+            logger.error("Error subscribing to record: \(error.localizedDescription)")
         }
     }
 

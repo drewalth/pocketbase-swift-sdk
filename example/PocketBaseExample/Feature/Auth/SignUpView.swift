@@ -98,6 +98,7 @@ struct SignUpView: View {
     }
 
     private func signUp() async {
+        guard let pb = pocketBase else { return }
         isLoading = true
         errorMessage = nil
 
@@ -108,7 +109,7 @@ struct SignUpView: View {
                 password: password,
                 passwordConfirm: passwordConfirm)
 
-            let authResult = try await pocketBase.signUp(
+            let authResult = try await pb.signUp(
                 dto: createUserDto,
                 userType: User.self)
 
@@ -116,7 +117,7 @@ struct SignUpView: View {
             isLoading = false
 
             // Sign in the newly created user
-            _ = try await pocketBase.authWithPassword(
+            _ = try await pb.authWithPassword(
                 email: email,
                 password: password,
                 userType: User.self)
