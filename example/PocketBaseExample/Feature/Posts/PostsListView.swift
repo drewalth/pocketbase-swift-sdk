@@ -53,10 +53,8 @@ struct PostsListView: View {
             .refreshable {
                 $posts.refresh()
             }
-            .onAppear {
-                Task {
-                    await connectRealtime()
-                }
+            .task {
+                await connectRealtime()
             }
             .onDisappear {
                 realtime?.unsubscribe()

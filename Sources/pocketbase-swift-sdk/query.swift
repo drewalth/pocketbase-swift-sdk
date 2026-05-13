@@ -17,8 +17,10 @@
 
     // MARK: - QueryStorage
 
-    // @unchecked Sendable: all access is exclusively from @MainActor via PBQuery's @State storage.
-    // No internal synchronization is needed.
+    // @unchecked Sendable: all mutable state is accessed exclusively from @MainActor
+    // via PBQuery's @State storage and @MainActor runFetch/setupRealtime methods.
+    // @Observable enables SwiftUI to track property-level mutations on this reference type.
+    @Observable
     private final class QueryStorage<T: PBCollection>: @unchecked Sendable {
         var items: [T] = []
         var isLoading = false
@@ -112,7 +114,7 @@
             }
 
             let configChanged = newHash != storage.configHash
-            let needsInitialFetch = storage.items.isEmpty && !storage.isLoading && storage.error == nil
+            let needsInitialFetch = storage.items.isEmpty && !storage.isLoading && storage.error == nil && storage.fetchTask == nil
 
             guard configChanged || tokenChanged || needsInitialFetch else { return }
 
