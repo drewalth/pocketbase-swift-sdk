@@ -185,7 +185,7 @@ public struct FiltersQuery: Sendable {
 // MARK: - FilterBuilder
 
 /// Type-safe filter builder for collections
-public class FilterBuilder {
+public struct FilterBuilder: Sendable {
 
     // MARK: Lifecycle
 
@@ -196,16 +196,15 @@ public class FilterBuilder {
     /// Add a filter condition
     @discardableResult
     public func condition(_ condition: FilterCondition) -> FilterBuilder {
-        conditions.append(condition)
-        return self
+        var copy = self
+        copy.conditions.append(condition)
+        return copy
     }
 
     /// Add a simple filter condition
     @discardableResult
     public func filter(field: String, op: FilterOperator, value: String) -> FilterBuilder {
-        let condition = FilterCondition(field: field, op: op, value: value)
-        conditions.append(condition)
-        return self
+        condition(FilterCondition(field: field, op: op, value: value))
     }
 
     /// Add an equality filter

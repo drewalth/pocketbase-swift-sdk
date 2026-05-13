@@ -51,7 +51,7 @@ public struct ExpandQuery: Sendable {
 // MARK: - ExpandBuilder
 
 /// Type-safe expand builder for collections
-public class ExpandBuilder {
+public struct ExpandBuilder: Sendable {
 
     // MARK: Lifecycle
 
@@ -62,15 +62,17 @@ public class ExpandBuilder {
     /// Add a field to expand
     @discardableResult
     public func field(_ field: String) -> ExpandBuilder {
-        fields.append(field)
-        return self
+        var copy = self
+        copy.fields.append(field)
+        return copy
     }
 
     /// Add nested expansion (e.g., "author.profile")
     @discardableResult
     public func nested(_ path: String) -> ExpandBuilder {
-        fields.append(path)
-        return self
+        var copy = self
+        copy.fields.append(path)
+        return copy
     }
 
     /// Build the expand query

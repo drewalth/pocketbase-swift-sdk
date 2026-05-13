@@ -14,15 +14,15 @@ struct AuthView: View {
 
     // MARK: Internal
 
-    @Environment(\.pocketBase) var pocketBase
+    @PBAuthState private var auth
 
     var body: some View {
         NavigationStack(path: $path) {
             Group {
-                if isAuthenticated {
-                    AuthenticatedView(isAuthenticated: $isAuthenticated)
+                if auth.isAuthenticated {
+                    AuthenticatedView(onSignOut: { $auth.refresh() })
                 } else {
-                    LoginFormView(isAuthenticated: $isAuthenticated)
+                    LoginFormView(onLogin: { $auth.refresh() })
                 }
             }
             .navigationDestination(for: AuthDestination.self) { destination in
@@ -30,15 +30,11 @@ struct AuthView: View {
                 case .reset:
                     ResetView()
                 case .signUp:
-                    SignUpView(isAuthenticated: $isAuthenticated)
+                    SignUpView(onSignUp: { $auth.refresh() })
                 }
             }
         }
-        .onAppear {
-            isAuthenticated = pocketBase?.isAuthenticated ?? false
-        }
-        .onChange(of: isAuthenticated) { _, newValue in
-            // Clear navigation path when auth state changes
+        .onChange(of: auth.isAuthenticated) { _, newValue in
             if !newValue {
                 path = NavigationPath()
             }
@@ -48,8 +44,6 @@ struct AuthView: View {
     // MARK: Private
 
     @State private var path = NavigationPath()
-    @State private var isAuthenticated = false
-
 }
 
 #Preview("Logged Out") {

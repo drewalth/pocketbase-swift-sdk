@@ -8,7 +8,7 @@
 
     // MARK: - PBAuthInfo
 
-    public enum PBAuthInfo {
+    public enum PBAuthInfo: Sendable {
         case authenticated(userId: String)
         case notAuthenticated
 
@@ -30,6 +30,20 @@
         public let refresh: () -> Void
     }
 
+    // MARK: - AuthStorage
+
+    // @unchecked Sendable: all mutable state is accessed exclusively from @MainActor
+    // via PBAuthState's @State storage and update() method.
+    // @Observable enables SwiftUI to track property-level mutations on this reference type.
+    @Observable
+    private final class AuthStorage: @unchecked Sendable {
+        var isAuthenticated = false
+        var userId: String?
+        var error: (any Error)?
+        var refreshToken = 0
+        var lastRefreshToken = 0
+    }
+
     // MARK: - PBAuthState
 
     @propertyWrapper
@@ -38,17 +52,13 @@
         // MARK: Lifecycle
 
         public init() {
-            self._isAuthenticated = State(initialValue: false)
-            self._userId = State(initialValue: nil)
-            self._error = State(initialValue: nil)
-            self._refreshToken = State(initialValue: 0)
-            self._lastRefreshToken = State(initialValue: 0)
+            self._storage = State(initialValue: AuthStorage())
         }
 
         // MARK: Public
 
         public var wrappedValue: PBAuthInfo {
-            if isAuthenticated, let userId {
+            if storage.isAuthenticated, let userId = storage.userId {
                 .authenticated(userId: userId)
             } else {
                 .notAuthenticated
@@ -57,10 +67,10 @@
 
         public var projectedValue: PBAuthProjection {
             PBAuthProjection(
-                isAuthenticated: isAuthenticated,
-                userId: userId,
-                error: error,
-                refresh: { refreshToken += 1 }
+                isAuthenticated: storage.isAuthenticated,
+                userId: storage.userId,
+                error: storage.error,
+                refresh: { [storage] in storage.refreshToken += 1 }
             )
         }
 
@@ -68,34 +78,29 @@
 
         public mutating func update() {
             guard let pb = pocketBase else {
-                error = PBError.missingEnvironment
+                storage.error = PBError.missingEnvironment
                 return
             }
 
-            error = nil
+            storage.error = nil
 
-            let needsRefresh = refreshToken != lastRefreshToken
+            let needsRefresh = storage.refreshToken != storage.lastRefreshToken
             if needsRefresh {
-                lastRefreshToken = refreshToken
+                storage.lastRefreshToken = storage.refreshToken
             }
 
             let currentAuth = pb.isAuthenticated
             let currentId = pb.currentUserId
 
-            if needsRefresh || isAuthenticated != currentAuth || userId != currentId {
-                isAuthenticated = currentAuth
-                userId = currentId
+            if needsRefresh || storage.isAuthenticated != currentAuth || storage.userId != currentId {
+                storage.isAuthenticated = currentAuth
+                storage.userId = currentId
             }
         }
 
         // MARK: Private
 
         @Environment(\.pocketBase) private var pocketBase
-
-        @State private var isAuthenticated: Bool
-        @State private var userId: String?
-        @State private var error: (any Error)?
-        @State private var refreshToken: Int
-        @State private var lastRefreshToken: Int
+        @State private var storage: AuthStorage
     }
 #endif

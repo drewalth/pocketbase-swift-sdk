@@ -14,7 +14,7 @@ struct AuthenticatedView: View {
     // MARK: Internal
 
     @Environment(\.pocketBase) var pocketBase
-    @Binding var isAuthenticated: Bool
+    var onSignOut: (() -> Void)?
 
     var body: some View {
         Form {
@@ -234,7 +234,7 @@ struct AuthenticatedView: View {
         print("✅ User signed out")
         currentUser = nil
         authMethods = nil
-        isAuthenticated = false
+        onSignOut?()
     }
 
     private func formatDate(_ dateString: String) -> String {
@@ -250,6 +250,5 @@ struct AuthenticatedView: View {
 }
 
 #Preview("Logged In") {
-    @Previewable @State var isAuthenticated = true
-    AuthenticatedView(isAuthenticated: $isAuthenticated)
+    AuthenticatedView(onSignOut: {})
 }

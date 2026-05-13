@@ -13,7 +13,7 @@ struct LoginFormView: View {
     // MARK: Internal
 
     @Environment(\.pocketBase) var pocketBase
-    @Binding var isAuthenticated: Bool
+    var onLogin: (() -> Void)?
 
     var body: some View {
         Form {
@@ -83,7 +83,7 @@ struct LoginFormView: View {
 
             print("✅ User signed in successfully: \(authResult.record.id)")
             isLoading = false
-            isAuthenticated = true
+            onLogin?()
         } catch {
             print("❌ Sign in failed: \(error)")
             errorMessage = "Login failed: \(error.localizedDescription)"
@@ -94,6 +94,6 @@ struct LoginFormView: View {
 
 #Preview {
     NavigationStack {
-        LoginFormView(isAuthenticated: .constant(false))
+        LoginFormView(onLogin: {})
     }
 }

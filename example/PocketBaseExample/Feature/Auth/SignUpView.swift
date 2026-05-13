@@ -14,7 +14,7 @@ struct SignUpView: View {
 
     @Environment(\.pocketBase) var pocketBase
     @Environment(\.dismiss) var dismiss
-    @Binding var isAuthenticated: Bool
+    var onSignUp: (() -> Void)?
 
     var body: some View {
         Form {
@@ -125,7 +125,7 @@ struct SignUpView: View {
                 password: password,
                 userType: User.self)
 
-            isAuthenticated = true
+            onSignUp?()
             dismiss()
         } catch {
             print("❌ Sign up failed: \(error)")
@@ -137,6 +137,6 @@ struct SignUpView: View {
 
 #Preview {
     NavigationStack {
-        SignUpView(isAuthenticated: .constant(false))
+        SignUpView(onSignUp: {})
     }
 }
