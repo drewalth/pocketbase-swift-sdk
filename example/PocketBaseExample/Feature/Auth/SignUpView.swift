@@ -21,7 +21,7 @@ struct SignUpView: View {
             Section {
                 TextField("Email", text: $email)
                     .textContentType(.emailAddress)
-                    .autocapitalization(.none)
+                    .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
 
                 TextField("Name", text: $name)

@@ -156,14 +156,11 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
 
     private var clientID: String? {
         didSet {
-            Task {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 await self.subscribeToRecord()
             }
         }
-    }
-
-    private func handleMessage(id: String?, event: String?, data: String?) {
-        logger.info("id: \(id ?? "No ID"), event: \(event ?? "No event"), data: \(data ?? "No data")")
     }
 
     private func handlePBConnect(data: String?) {

@@ -34,7 +34,7 @@ struct ResetView: View {
             Section {
                 TextField("Email", text: $email)
                     .textContentType(.emailAddress)
-                    .autocapitalization(.none)
+                    .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
             } header: {
                 Text("Enter your email address")

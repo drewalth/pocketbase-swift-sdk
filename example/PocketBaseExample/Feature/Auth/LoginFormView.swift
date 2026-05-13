@@ -20,7 +20,7 @@ struct LoginFormView: View {
             Section {
                 TextField("Email", text: $email)
                     .textContentType(.emailAddress)
-                    .autocapitalization(.none)
+                    .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
 
                 SecureField("Password", text: $password)

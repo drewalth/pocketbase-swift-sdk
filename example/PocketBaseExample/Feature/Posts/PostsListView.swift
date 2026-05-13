@@ -70,10 +70,10 @@ struct PostsListView: View {
 
     private func connectRealtime() async {
         guard let pb = pocketBase else { return }
-        realtime = pb.realtime(collection: "posts", onConnect: {
-            connected = true
-        }, onDisconnect: {
-            connected = false
+        realtime = pb.realtime(collection: "posts", onConnect: { [weak self] in
+            self?.connected = true
+        }, onDisconnect: { [weak self] in
+            self?.connected = false
             print("Disconnected from realtime")
         }, onEvent: { event in
             print("Received event: \(event.action) for record: \(event.record.id)")

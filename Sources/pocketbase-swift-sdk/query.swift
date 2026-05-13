@@ -239,22 +239,19 @@
                 onDisconnect: {},
                 onEvent: { [weak storage] _ in
                     guard let storage else { return }
-                    Task { @MainActor [weak storage] in
+                    storage.fetchTask?.cancel()
+                    storage.fetchTask = Task { @MainActor [weak storage] in
                         guard let storage else { return }
-                        storage.fetchTask?.cancel()
-                        storage.fetchTask = Task { @MainActor [weak storage] in
-                            guard let storage else { return }
-                            await runFetch(
-                                pb: pb,
-                                storage: storage,
-                                collection: collection,
-                                filter: filter,
-                                sortDescriptors: sortDescriptors,
-                                expand: expand,
-                                perPage: perPage,
-                                realtime: false
-                            )
-                        }
+                        await runFetch(
+                            pb: pb,
+                            storage: storage,
+                            collection: collection,
+                            filter: filter,
+                            sortDescriptors: sortDescriptors,
+                            expand: expand,
+                            perPage: perPage,
+                            realtime: false
+                        )
                     }
                 }
             )
