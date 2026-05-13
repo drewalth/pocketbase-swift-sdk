@@ -108,10 +108,11 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
                         onDisconnect()
                     case .event(let event):
                         if event.event == "PB_CONNECT" {
-                            logger.info("Realtime connection established.")
-                            connected = true
-                            handlePBConnect(data: event.data)
-                            onConnect()
+                            logger.info("Realtime connection handshake received.")
+                            if handlePBConnect(data: event.data) {
+                                connected = true
+                                onConnect()
+                            }
                         } else {
                             handleRealtimeEvent(data: event.data)
                         }
@@ -163,21 +164,23 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
         }
     }
 
-    private func handlePBConnect(data: String?) {
+    private func handlePBConnect(data: String?) -> Bool {
         do {
             guard let data else {
                 logger.warning("No data received for PB_CONNECT")
-                return
+                return false
             }
             let decoder = JSONDecoder()
             guard let jsonData = data.data(using: .utf8) else {
                 logger.error("PB_CONNECT data is not valid UTF-8")
-                return
+                return false
             }
             let pbConnect = try decoder.decode(PBCONNECT.self, from: jsonData)
             clientID = pbConnect.clientId
+            return true
         } catch {
             logger.error("Error decoding PB_CONNECT: \(error)")
+            return false
         }
     }
 
