@@ -13,14 +13,14 @@ struct LoginFormView: View {
     // MARK: Internal
 
     @Environment(\.pocketBase) var pocketBase
-    @Binding var isAuthenticated: Bool
+    var onLogin: (() -> Void)?
 
     var body: some View {
         Form {
             Section {
                 TextField("Email", text: $email)
                     .textContentType(.emailAddress)
-                    .autocapitalization(.none)
+                    .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
 
                 SecureField("Password", text: $password)
@@ -68,18 +68,22 @@ struct LoginFormView: View {
     @State private var errorMessage: String?
 
     private func login() async {
+        guard let pb = pocketBase else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
         isLoading = true
         errorMessage = nil
 
         do {
-            let authResult = try await pocketBase.authWithPassword(
+            let authResult = try await pb.authWithPassword(
                 email: email,
                 password: password,
                 userType: User.self)
 
             print("✅ User signed in successfully: \(authResult.record.id)")
             isLoading = false
-            isAuthenticated = true
+            onLogin?()
         } catch {
             print("❌ Sign in failed: \(error)")
             errorMessage = "Login failed: \(error.localizedDescription)"
@@ -90,6 +94,6 @@ struct LoginFormView: View {
 
 #Preview {
     NavigationStack {
-        LoginFormView(isAuthenticated: .constant(false))
+        LoginFormView(onLogin: {})
     }
 }

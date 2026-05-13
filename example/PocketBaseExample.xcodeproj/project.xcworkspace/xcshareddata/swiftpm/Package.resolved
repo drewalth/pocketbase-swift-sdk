@@ -1,13 +1,13 @@
 {
-  "originHash" : "0bcb02154f34f833d159b5808c5720049b777a475ceefea5a735dc345c9a1262",
+  "originHash" : "67a18d3ebeb9489e499e21d28fe90d32a7d55f45f8c7a202922a884644874aa3",
   "pins" : [
     {
       "identity" : "alamofire",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Alamofire/Alamofire.git",
       "state" : {
-        "revision" : "513364f870f6bfc468f9d2ff0a95caccc10044c5",
-        "version" : "5.10.2"
+        "revision" : "7595cbcf59809f9977c5f6378500de2ad73b7ddb",
+        "version" : "5.12.0"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Recouse/EventSource.git",
       "state" : {
-        "revision" : "7b2f4f585d3927876bd76eaede9fdff779eff102",
-        "version" : "0.1.5"
+        "revision" : "d3d3a918c6b7aad080d2cf87cf7eaa87872e579b",
+        "version" : "0.1.8"
       }
     },
     {

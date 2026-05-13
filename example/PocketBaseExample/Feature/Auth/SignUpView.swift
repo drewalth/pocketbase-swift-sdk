@@ -14,14 +14,14 @@ struct SignUpView: View {
 
     @Environment(\.pocketBase) var pocketBase
     @Environment(\.dismiss) var dismiss
-    @Binding var isAuthenticated: Bool
+    var onSignUp: (() -> Void)?
 
     var body: some View {
         Form {
             Section {
                 TextField("Email", text: $email)
                     .textContentType(.emailAddress)
-                    .autocapitalization(.none)
+                    .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
 
                 TextField("Name", text: $name)
@@ -98,6 +98,10 @@ struct SignUpView: View {
     }
 
     private func signUp() async {
+        guard let pb = pocketBase else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
         isLoading = true
         errorMessage = nil
 
@@ -108,7 +112,7 @@ struct SignUpView: View {
                 password: password,
                 passwordConfirm: passwordConfirm)
 
-            let authResult = try await pocketBase.signUp(
+            let authResult = try await pb.signUp(
                 dto: createUserDto,
                 userType: User.self)
 
@@ -116,12 +120,12 @@ struct SignUpView: View {
             isLoading = false
 
             // Sign in the newly created user
-            _ = try await pocketBase.authWithPassword(
+            _ = try await pb.authWithPassword(
                 email: email,
                 password: password,
                 userType: User.self)
 
-            isAuthenticated = true
+            onSignUp?()
             dismiss()
         } catch {
             print("❌ Sign up failed: \(error)")
@@ -133,6 +137,6 @@ struct SignUpView: View {
 
 #Preview {
     NavigationStack {
-        SignUpView(isAuthenticated: .constant(false))
+        SignUpView(onSignUp: {})
     }
 }

@@ -77,9 +77,27 @@ public struct PasswordAuthentication: PBCollection {
     public let identityFields: [String]
 }
 
+// MARK: - Shared URL Builder
+
+func buildURL(baseURL: String, path: String, expand: ExpandQuery? = nil) -> String {
+    var url = URLComponents(string: baseURL)
+
+    // Append the path to the existing path, ensuring proper URL construction
+    let fullPath = (url?.path ?? "") + path
+    url?.path = fullPath
+
+    if let expand, !expand.isEmpty {
+        url?.queryItems = [URLQueryItem(name: "expand", value: expand.queryString)]
+    }
+    return url?.string ?? ""
+}
+
 // MARK: - PocketBase
 
-public class PocketBase {
+// @unchecked Sendable: Alamofire.Session is internally thread-safe (uses serial dispatch queue).
+// SecureStorage uses Keychain which is OS-level thread-safe. All stored properties are either
+// value types or immutable after init.
+public class PocketBase: @unchecked Sendable {
 
     // MARK: Lifecycle
 
@@ -109,7 +127,7 @@ public class PocketBase {
         expand: ExpandQuery? = nil)
     async throws -> Output {
         let urlString = "/api/collections/\(collection)/records/\(id)"
-        let finalURLString = buildURL(urlString, expand: expand)
+        let finalURLString = buildURL(baseURL: baseURL, path: urlString, expand: expand)
         logger.info("GET \(finalURLString)")
         return try await httpClient.get(finalURLString, output: model).get()
     }
@@ -119,6 +137,7 @@ public class PocketBase {
         model _: T.Type,
         expand: ExpandQuery? = nil,
         filters: FiltersQuery? = nil,
+        sort: String? = nil,
         page: Int = 1,
         perPage: Int = 100)
     async throws -> PBListResponse<T> {
@@ -135,6 +154,10 @@ public class PocketBase {
 
             if let filters, !filters.isEmpty {
                 baseQueryItems.append(URLQueryItem(name: "filter", value: filters.queryString))
+            }
+
+            if let sort {
+                baseQueryItems.append(URLQueryItem(name: "sort", value: sort))
             }
 
             return baseQueryItems
@@ -158,13 +181,34 @@ public class PocketBase {
         return try await httpClient.get(urlString, output: PBListResponse<T>.self).get()
     }
 
+    /// Typed sort overload for callers who prefer `PBSortQuery<T>` over a raw sort string.
+    public func getList<T: PBCollection>(
+        collection: String,
+        model: T.Type,
+        expand: ExpandQuery? = nil,
+        filters: FiltersQuery? = nil,
+        sort: PBSortQuery<T>,
+        page: Int = 1,
+        perPage: Int = 100
+    ) async throws -> PBListResponse<T> {
+        try await getList(
+            collection: collection,
+            model: model,
+            expand: expand,
+            filters: filters,
+            sort: sort.queryString,
+            page: page,
+            perPage: perPage
+        )
+    }
+
     public func create<Output: Decodable & Sendable>(
         collection: String,
         record: some Encodable & Sendable,
         output: Output.Type)
     async throws -> Output {
         let path = "/api/collections/\(collection)/records"
-        let urlString = buildURL(path)
+        let urlString = buildURL(baseURL: baseURL, path: path)
         logger.info("POST \(urlString)")
         return try await httpClient.post(urlString, input: record, output: output).get()
     }
@@ -175,7 +219,7 @@ public class PocketBase {
         record: T)
     async throws -> T {
         let path = "/api/collections/\(collection)/records/\(id)"
-        let urlString = buildURL(path)
+        let urlString = buildURL(baseURL: baseURL, path: path)
         logger.info("PATCH \(urlString)")
         return try await httpClient.patch(urlString, input: record, output: T.self).get()
     }
@@ -185,7 +229,7 @@ public class PocketBase {
         id: String)
     async throws {
         let path = "/api/collections/\(collection)/records/\(id)"
-        let urlString = buildURL(path)
+        let urlString = buildURL(baseURL: baseURL, path: path)
         logger.info("DELETE \(urlString)")
         let _: EmptyResponse = try await httpClient.delete(urlString, output: PBEmptyEntity.self).get()
     }
@@ -197,30 +241,17 @@ public class PocketBase {
     // MARK: Internal
 
     let baseURL: String
-    var httpClient: HttpClient
+    let httpClient: HttpClient
     let secureStorage = SecureStorage()
     let logger = Logger(category: "PocketBase")
-
-    func buildURL(_ path: String, expand: ExpandQuery? = nil) -> String {
-        var url = URLComponents(string: baseURL)
-
-        // Append the path to the existing path, ensuring proper URL construction
-        let fullPath = (url?.path ?? "") + path
-        url?.path = fullPath
-
-        if let expand, !expand.isEmpty {
-            url?.queryItems = [URLQueryItem(name: "expand", value: expand.queryString)]
-        }
-        let val = url?.string ?? ""
-
-        return val
-    }
 
 }
 
 // MARK: - Collection
 
-public class Collection<T: PBCollection> {
+// @unchecked Sendable: stored properties are either value types or
+// Alamofire.Session (internally thread-safe via serial dispatch queue).
+public class Collection<T: PBCollection>: @unchecked Sendable {
 
     // MARK: Lifecycle
 
@@ -237,7 +268,7 @@ public class Collection<T: PBCollection> {
         expand: ExpandQuery? = nil)
     async throws -> T {
         let urlString = "/api/collections/\(collectionName)/records/\(id)"
-        let finalURLString = buildURL(urlString, expand: expand)
+        let finalURLString = buildURL(baseURL: baseURL, path: urlString, expand: expand)
         logger.info("GET \(finalURLString)")
         return try await httpClient.get(finalURLString, output: T.self).get()
     }
@@ -245,6 +276,7 @@ public class Collection<T: PBCollection> {
     public func getList(
         expand: ExpandQuery? = nil,
         filters: FiltersQuery? = nil,
+        sort: PBSortQuery<T>? = nil,
         page: Int = 1,
         perPage: Int = 100)
     async throws -> PBListResponse<T> {
@@ -261,6 +293,10 @@ public class Collection<T: PBCollection> {
 
             if let filters, !filters.isEmpty {
                 baseQueryItems.append(URLQueryItem(name: "filter", value: filters.queryString))
+            }
+
+            if let sort, !sort.isEmpty {
+                baseQueryItems.append(URLQueryItem(name: "sort", value: sort.queryString))
             }
 
             return baseQueryItems
@@ -289,7 +325,7 @@ public class Collection<T: PBCollection> {
         output: Output.Type)
     async throws -> Output {
         let path = "/api/collections/\(collectionName)/records"
-        let urlString = buildURL(path)
+        let urlString = buildURL(baseURL: baseURL, path: path)
         logger.info("POST \(urlString)")
         return try await httpClient.post(urlString, input: record, output: output).get()
     }
@@ -299,7 +335,7 @@ public class Collection<T: PBCollection> {
         record: T)
     async throws -> T {
         let path = "/api/collections/\(collectionName)/records/\(id)"
-        let urlString = buildURL(path)
+        let urlString = buildURL(baseURL: baseURL, path: path)
         logger.info("PATCH \(urlString)")
         return try await httpClient.patch(urlString, input: record, output: T.self).get()
     }
@@ -308,16 +344,16 @@ public class Collection<T: PBCollection> {
         id: String)
     async throws {
         let path = "/api/collections/\(collectionName)/records/\(id)"
-        let urlString = buildURL(path)
+        let urlString = buildURL(baseURL: baseURL, path: path)
         logger.info("DELETE \(urlString)")
         let _: EmptyResponse = try await httpClient.delete(urlString, output: PBEmptyEntity.self).get()
     }
 
     public func realtime(
         record: String = "*",
-        onConnect: @escaping () -> Void,
-        onDisconnect: @escaping () -> Void,
-        onEvent: @escaping (RealtimeEvent<T>) -> Void)
+        onConnect: @escaping @MainActor () -> Void,
+        onDisconnect: @escaping @MainActor () -> Void,
+        onEvent: @escaping @MainActor (RealtimeEvent<T>) -> Void)
     -> Realtime<T> {
         Realtime(
             baseURL: baseURL,
@@ -330,7 +366,7 @@ public class Collection<T: PBCollection> {
 
     public func realtime(
         record: String = "*",
-        onEvent: @escaping (RealtimeEvent<T>) -> Void)
+        onEvent: @escaping @MainActor (RealtimeEvent<T>) -> Void)
     -> Realtime<T> {
         Realtime(
             baseURL: baseURL,
@@ -347,18 +383,5 @@ public class Collection<T: PBCollection> {
     private let collectionName: String
     private let httpClient: HttpClient
     private let logger = Logger(category: "Collection")
-
-    private func buildURL(_ path: String, expand: ExpandQuery? = nil) -> String {
-        var url = URLComponents(string: baseURL)
-
-        // Append the path to the existing path, ensuring proper URL construction
-        let fullPath = (url?.path ?? "") + path
-        url?.path = fullPath
-
-        if let expand, !expand.isEmpty {
-            url?.queryItems = [URLQueryItem(name: "expand", value: expand.queryString)]
-        }
-        return url?.string ?? ""
-    }
 
 }

@@ -15,9 +15,9 @@ extension PocketBase {
     public func realtime<T: PBCollection>(
         collection: String,
         record: String = "*",
-        onConnect: @escaping () -> Void,
-        onDisconnect: @escaping () -> Void,
-        onEvent: @escaping (RealtimeEvent<T>) -> Void)
+        onConnect: @escaping @MainActor () -> Void,
+        onDisconnect: @escaping @MainActor () -> Void,
+        onEvent: @escaping @MainActor (RealtimeEvent<T>) -> Void)
     -> Realtime<T> {
         Realtime(
             baseURL: baseURL,
@@ -31,7 +31,7 @@ extension PocketBase {
     public func realtime<T: PBCollection>(
         collection: String,
         record: String = "*",
-        onEvent: @escaping (RealtimeEvent<T>) -> Void)
+        onEvent: @escaping @MainActor (RealtimeEvent<T>) -> Void)
     -> Realtime<T> {
         Realtime(
             baseURL: baseURL,
@@ -53,9 +53,9 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
         baseURL: String,
         collection: String,
         record: String = "*",
-        onConnect: @escaping () -> Void,
-        onDisconnect: @escaping () -> Void,
-        onEvent: @escaping (RealtimeEvent<T>) -> Void) {
+        onConnect: @escaping @MainActor () -> Void,
+        onDisconnect: @escaping @MainActor () -> Void,
+        onEvent: @escaping @MainActor (RealtimeEvent<T>) -> Void) {
         self.baseURL = baseURL
         self.onConnect = onConnect
         self.onDisconnect = onDisconnect
@@ -70,7 +70,7 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
 
     // MARK: Public
 
-    public var connected = false
+    @MainActor public var connected = false
 
     public static func == (lhs: Realtime, rhs: Realtime) -> Bool {
         lhs.clientID == rhs.clientID
@@ -94,26 +94,33 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
             return
         }
 
-        subscriptionTask = Task {
+        subscriptionTask = Task { @concurrent [weak self] in
+            guard let self else { return }
             for await event in dataTask.events() {
-                switch event {
-                case .open:
-                    logger.info("Realtime connection initiated.")
-                case .error(let error):
-                    logger.error("\(error.localizedDescription)")
-                case .event(let event):
-                    if event.event == "PB_CONNECT" {
-                        logger.info("Realtime connection established.")
-                        connected = true
-                        handlePBConnect(data: event.data)
-                        onConnect()
-                    } else {
-                        handleRealtimeEvent(data: event.data)
+                await MainActor.run { [weak self] in
+                    guard let self else { return }
+                    switch event {
+                    case .open:
+                        logger.info("Realtime connection initiated.")
+                    case .error(let error):
+                        logger.error("\(error.localizedDescription)")
+                        connected = false
+                        onDisconnect()
+                    case .event(let event):
+                        if event.event == "PB_CONNECT" {
+                            logger.info("Realtime connection handshake received.")
+                            if handlePBConnect(data: event.data) {
+                                connected = true
+                                onConnect()
+                            }
+                        } else {
+                            handleRealtimeEvent(data: event.data)
+                        }
+                    case .closed:
+                        logger.info("Realtime connection closed.")
+                        connected = false
+                        onDisconnect()
                     }
-                case .closed:
-                    logger.info("Realtime connection closed.")
-                    connected = false
-                    onDisconnect()
                 }
             }
         }
@@ -121,8 +128,11 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
 
     public func unsubscribe() {
         subscriptionTask?.cancel()
-        connected = false
-        onDisconnect()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            connected = false
+            onDisconnect()
+        }
     }
 
     // MARK: Private
@@ -131,7 +141,7 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
         let clientId: String
     }
 
-    private let onEvent: (RealtimeEvent<T>) -> Void
+    private let onEvent: @MainActor (RealtimeEvent<T>) -> Void
 
     private let baseURL: String
 
@@ -139,40 +149,42 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
     private var subscriptionTask: Task<Void, Never>?
 
     private let logger = Logger(category: "RealTime")
-    private let onConnect: () -> Void
-    private let onDisconnect: () -> Void
+    private let onConnect: @MainActor () -> Void
+    private let onDisconnect: @MainActor () -> Void
     private let collection: String
     private let record: String
     private var eventSource = EventSource()
 
     private var clientID: String? {
         didSet {
-            Task {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 await self.subscribeToRecord()
             }
         }
     }
 
-    private func handleMessage(id: String?, event: String?, data: String?) {
-        logger.info("id: \(id ?? "No ID"), event: \(event ?? "No event"), data: \(data ?? "No data")")
-    }
-
-    private func handlePBConnect(data: String?) {
+    private func handlePBConnect(data: String?) -> Bool {
         do {
             guard let data else {
                 logger.warning("No data received for PB_CONNECT")
-                return
+                return false
             }
             let decoder = JSONDecoder()
-            let jsonData = data.data(using: .utf8)!
+            guard let jsonData = data.data(using: .utf8) else {
+                logger.error("PB_CONNECT data is not valid UTF-8")
+                return false
+            }
             let pbConnect = try decoder.decode(PBCONNECT.self, from: jsonData)
             clientID = pbConnect.clientId
+            return true
         } catch {
             logger.error("Error decoding PB_CONNECT: \(error)")
+            return false
         }
     }
 
-    private func handleRealtimeEvent(data: String?) {
+    @MainActor private func handleRealtimeEvent(data: String?) {
         do {
             guard let data else {
                 logger.warning("No data received for realtime event")
@@ -180,7 +192,10 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
             }
 
             let decoder = JSONDecoder()
-            let jsonData = data.data(using: .utf8)!
+            guard let jsonData = data.data(using: .utf8) else {
+                logger.error("Realtime event data is not valid UTF-8")
+                return
+            }
 
             // Decode the realtime event
             let realtimeEvent = try decoder.decode(RealtimeEvent<T>.self, from: jsonData)
@@ -192,15 +207,17 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
         }
     }
 
-    private func subscribeToRecord() async {
+    @MainActor private func subscribeToRecord() async {
         guard let clientID else {
             logger.error("No client ID found")
             return
         }
 
         let realtimeURL = "\(baseURL)/api/realtime"
-        let urlComps = URLComponents(string: realtimeURL)!
-        let url = urlComps.url!
+        guard let urlComps = URLComponents(string: realtimeURL), let url = urlComps.url else {
+            logger.error("Invalid realtime URL: \(realtimeURL)")
+            return
+        }
 
         let parameters: [String: Any] = [
             "clientId": clientID,
@@ -211,7 +228,9 @@ public final class Realtime<T: PBCollection>: Equatable, @unchecked Sendable {
             _ = try await sendPostRequest(url: url, parameters: parameters)
             logger.info("Subscribed")
         } catch {
-            logger.error("Error: \(error)")
+            logger.error("Error subscribing to record: \(error.localizedDescription)")
+            connected = false
+            onDisconnect()
         }
     }
 

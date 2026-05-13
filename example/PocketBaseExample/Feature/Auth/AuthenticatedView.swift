@@ -14,7 +14,7 @@ struct AuthenticatedView: View {
     // MARK: Internal
 
     @Environment(\.pocketBase) var pocketBase
-    @Binding var isAuthenticated: Bool
+    var onSignOut: (() -> Void)?
 
     var body: some View {
         Form {
@@ -175,10 +175,13 @@ struct AuthenticatedView: View {
     @State private var errorMessage: String?
 
     private func loadCurrentUser() async {
-        guard let userId = pocketBase.currentUserId else { return }
+        guard let pb = pocketBase, let userId = pb.currentUserId else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
 
         do {
-            let userCollection: Collection<User> = pocketBase.collection("users")
+            let userCollection: Collection<User> = pb.collection("users")
             currentUser = try await userCollection.getOne(id: userId)
             print("✅ Loaded current user: \(userId)")
         } catch {
@@ -188,11 +191,15 @@ struct AuthenticatedView: View {
     }
 
     private func refreshToken() async {
+        guard let pb = pocketBase else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
         isRefreshing = true
         errorMessage = nil
 
         do {
-            let refreshResult = try await pocketBase.authRefresh(userType: User.self)
+            let refreshResult = try await pb.authRefresh(userType: User.self)
             print("✅ Token refreshed: \(refreshResult.token)")
             currentUser = refreshResult.record
             isRefreshing = false
@@ -204,11 +211,15 @@ struct AuthenticatedView: View {
     }
 
     private func loadAuthMethods() async {
+        guard let pb = pocketBase else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
         isLoadingAuthMethods = true
         errorMessage = nil
 
         do {
-            authMethods = try await pocketBase.getAuthMethods()
+            authMethods = try await pb.getAuthMethods()
             print("✅ Auth methods loaded: password=\(authMethods?.password.enabled ?? false)")
             isLoadingAuthMethods = false
         } catch {
@@ -219,11 +230,11 @@ struct AuthenticatedView: View {
     }
 
     private func signOut() {
-        pocketBase.signOut()
+        pocketBase?.signOut()
         print("✅ User signed out")
         currentUser = nil
         authMethods = nil
-        isAuthenticated = false
+        onSignOut?()
     }
 
     private func formatDate(_ dateString: String) -> String {
@@ -239,6 +250,5 @@ struct AuthenticatedView: View {
 }
 
 #Preview("Logged In") {
-    @Previewable @State var isAuthenticated = true
-    AuthenticatedView(isAuthenticated: $isAuthenticated)
+    AuthenticatedView(onSignOut: {})
 }

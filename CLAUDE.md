@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Swift SDK for [PocketBase](https://pocketbase.io/) (v0.32.0). SPM library exposing a `PocketBase` product, targeting iOS 17+ / macOS 14+ with Swift 6.1 tools. Depends on Alamofire (HTTP) and Recouse/EventSource (SSE for realtime).
+Swift SDK for [PocketBase](https://pocketbase.io/) (v0.37.3). SPM library exposing a `PocketBase` product, targeting iOS 17+ / macOS 14+ with Swift 6.1 tools. Depends on Alamofire (HTTP) and Recouse/EventSource (SSE for realtime).
 
 ## Commands
 
@@ -35,7 +35,9 @@ Two parallel APIs for CRUD exist and must be kept in sync when changing request 
 1. **Untyped on `PocketBase`** — `pb.getOne/getList/create/update/delete(collection:model:...)`. Caller passes the model type each call.
 2. **Typed `Collection<T>`** — obtained via `pb.collection("name")`. Binds the generic once; thin wrapper around the same endpoints. Also exposes `realtime(...)` for that specific collection.
 
-Both paths build URLs through a private `buildURL` that appends `expand` / `filter` query items, then delegate to `HttpClient`. If you add a new query parameter, update **both** call sites (see `pb.swift` and `Collection` in the same file).
+Both paths build URLs through a private `buildURL` method that appends `expand` query items, then delegate to `HttpClient`. **`buildURL` is duplicated** — `PocketBase` and `Collection` each have their own private copy (in the same file). If you add a new query parameter or fix a URL bug, update **both**.
+
+Exception: `getList` on both classes constructs URLs inline with `URLComponents` rather than calling `buildURL`, because it needs multiple query items (`page`, `perPage`, `expand`, `filter`). Keep this inconsistency in mind when touching URL construction.
 
 ### Model protocols (`model.swift`, `pb.swift`)
 
@@ -48,11 +50,30 @@ Both paths build URLs through a private `buildURL` that appends `expand` / `filt
 
 `auth.swift` extends `PocketBase` with password / refresh / reset / verify endpoints. On successful `authWithPassword`, the token and user id are persisted via `SecureStorage` (`pocketbase_user_token`, `pocketbase_user_id` Keychain service `io.pocketbase.swift.sdk`). `HttpClient`'s `RequestInterceptor.adapt` reads that token and attaches `Authorization` on every request (user token preferred, admin token as fallback). `signOut()` clears both.
 
+**Admin auth gap**: `SecureStorage` has full admin token support (`storeAdminToken`, `adminToken`, `adminId`) and the interceptor falls back to the admin token, but there is no public `authWithPassword` for the admin collection. Admin token must be set manually via `secureStorage.storeAdminToken(...)` for now.
+
 **Test-environment keychain shim**: `SecureStorage` detects `XCTestConfigurationFilePath` under `#if DEBUG` and transparently swaps Keychain for `UserDefaults` keys prefixed `test_`. This sidesteps missing keychain entitlements in SPM test hosts — do not "simplify" it away. When writing tests that assert auth state, they rely on this.
 
 ### Realtime (`realtime.swift`)
 
 `Realtime<T>` wraps `EventSource` for SSE against `/api/realtime`. Flow: subscribe → receive `PB_CONNECT` event → decode `clientId` → POST `{clientId, subscriptions: ["<collection>/<record>"]}` back to `/api/realtime` to register. Subsequent events are decoded as `RealtimeEvent<T>` and delivered to `onEvent`. The post-back is done with raw `URLSession` (not `HttpClient`), so it does **not** include the auth header — keep that in mind if collection API rules require auth.
+
+### Logging (`logging.swift`)
+
+All classes use `os.Logger` with subsystem `com.drewalth.pocketbase-swift-sdk` and per-class categories (`PocketBase`, `HttpClient`, `Collection`, `RealTime`, `SecureStorage`). Filter logs in Console.app by this subsystem.
+
+### `Collection<T>` creates its own `HttpClient`
+
+Each `pb.collection("name")` call creates a new `Collection<T>` with its own `HttpClient` and thus its own Alamofire `Session`. This means each collection has a separate URL session and interceptor chain. Don't worry about reusing a single session — the current design intentionally isolates per-collection.
+
+### Test organization
+
+Tests live in `Tests/pocketbase-swift-sdkTests/` and are organized by feature file:
+- `test-models.swift` — shared test record types (`TestUser`, `TestPost`, `Bookmark`, etc.)
+- `authentication.swift`, `crud_operations.swift`, `fluent_api.swift`, `expand.swift`, `filters.swift`, `realtime.swift` — integration tests hitting the live test server
+- `type_inference.swift` — compile-time type inference checks
+
+All tests are integration tests requiring the test server. Add new test models to `test-models.swift`. The test server must be running (`make start_test_server` or `make start_test_server_fresh`).
 
 ### Query builders
 

@@ -12,6 +12,8 @@ import SwiftUI
 
 struct ContentView: View {
 
+    @Environment(\.pocketBase) private var pocketBase
+
     var body: some View {
         TabView {
             PostsListView()
@@ -19,6 +21,13 @@ struct ContentView: View {
                 .tabItem {
                     Label("Posts", systemImage: "list.bullet")
                 }
+            if let pocketBase {
+                PostsUIKitWrapper(pocketBase: pocketBase)
+                    .tag(Tabs.postsUIKit)
+                    .tabItem {
+                        Label("Posts UIKit", systemImage: "rectangle.grid.1x2")
+                    }
+            }
             AuthView()
                 .tag(Tabs.auth)
                 .tabItem {
@@ -36,5 +45,6 @@ struct ContentView: View {
 
 enum Tabs {
     case postList
+    case postsUIKit
     case auth
 }

@@ -8,7 +8,7 @@
 // MARK: - FilterOperator
 
 /// PocketBase filter operators
-public enum FilterOperator: String, CaseIterable {
+public enum FilterOperator: String, CaseIterable, Sendable {
     case equal = "="
     case notEqual = "!="
     case greaterThan = ">"
@@ -26,7 +26,7 @@ public enum FilterOperator: String, CaseIterable {
 // MARK: - FilterCondition
 
 /// Represents a single filter condition
-public struct FilterCondition {
+public struct FilterCondition: Sendable {
 
     // MARK: Lifecycle
 
@@ -70,7 +70,7 @@ public struct FilterCondition {
 // MARK: - FiltersQuery
 
 /// Represents a PocketBase filters query with support for multiple conditions
-public struct FiltersQuery {
+public struct FiltersQuery: Sendable {
 
     // MARK: Lifecycle
 
@@ -185,7 +185,7 @@ public struct FiltersQuery {
 // MARK: - FilterBuilder
 
 /// Type-safe filter builder for collections
-public class FilterBuilder {
+public struct FilterBuilder: Sendable {
 
     // MARK: Lifecycle
 
@@ -196,16 +196,15 @@ public class FilterBuilder {
     /// Add a filter condition
     @discardableResult
     public func condition(_ condition: FilterCondition) -> FilterBuilder {
-        conditions.append(condition)
-        return self
+        var copy = self
+        copy.conditions.append(condition)
+        return copy
     }
 
     /// Add a simple filter condition
     @discardableResult
     public func filter(field: String, op: FilterOperator, value: String) -> FilterBuilder {
-        let condition = FilterCondition(field: field, op: op, value: value)
-        conditions.append(condition)
-        return self
+        condition(FilterCondition(field: field, op: op, value: value))
     }
 
     /// Add an equality filter

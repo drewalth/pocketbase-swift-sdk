@@ -34,7 +34,7 @@ struct ResetView: View {
             Section {
                 TextField("Email", text: $email)
                     .textContentType(.emailAddress)
-                    .autocapitalization(.none)
+                    .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
             } header: {
                 Text("Enter your email address")
@@ -107,15 +107,19 @@ struct ResetView: View {
     @State private var selectedAction: ResetAction = .passwordReset
 
     private func performAction() async {
+        guard let pb = pocketBase else {
+            errorMessage = "App is not configured. Please restart."
+            return
+        }
         isLoading = true
         errorMessage = nil
 
         do {
             if selectedAction == .passwordReset {
-                _ = try await pocketBase.requestPasswordReset(email: email)
+                _ = try await pb.requestPasswordReset(email: email)
                 print("✅ Password reset requested")
             } else {
-                _ = try await pocketBase.requestVerification(email: email)
+                _ = try await pb.requestVerification(email: email)
                 print("✅ Email verification requested")
             }
 

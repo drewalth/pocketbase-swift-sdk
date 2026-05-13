@@ -1,31 +1,78 @@
-# Pocketbase Swift SDK
+# PocketBase Swift SDK
 
-A Swift SDK for [Pocketbase](https://pocketbase.io/) v0.37.3.
+A lightweight, idiomatic Swift SDK for [PocketBase](https://pocketbase.io/) with SwiftUI property
+wrappers and UIKit compatibility.
 
-[![CI](https://github.com/drewalth/pocketbase-swift-sdk/actions/workflows/ci.yaml/badge.svg)](https://github.com/drewalth/pocketbase-swift-sdk/actions/workflows/ci.yaml) [![Swift](https://img.shields.io/badge/Swift-6.0-orange?style=flat-square)](https://img.shields.io/badge/Swift-6.0-Orange?style=flat-square)
-[![Platforms](https://img.shields.io/badge/Platforms-macOS_iOS-yellowgreen?style=flat-square)](https://img.shields.io/badge/Platforms-macOS_iOS-YellowGreen?style=flat-square)
+[![CI](https://github.com/drewalth/pocketbase-swift-sdk/actions/workflows/ci.yaml/badge.svg)](https://github.com/drewalth/pocketbase-swift-sdk/actions/workflows/ci.yaml)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdrewalth%2Fpocketbase-swift-sdk%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/drewalth/pocketbase-swift-sdk)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdrewalth%2Fpocketbase-swift-sdk%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/drewalth/pocketbase-swift-sdk)
 
+- [Overview](#overview)
+- [Quick start](#quick-start)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Example app](#example-app)
+- [License](#license)
 
-## Features
+## Overview
 
-- ✅ Generic user authentication (supports any model)
-- ✅ User authentication (sign up, sign in, sign out)
-- ✅ Token refresh
-- ✅ Password reset
-- ✅ CRUD operations
-- ✅ Realtime subscriptions
-- ✅ Type-safe data models
-- ✅ Automatic token management (stores tokens securely)
+The SDK provides a type-safe, concurrency-first API for PocketBase's REST and SSE endpoints. Define
+your models as `Codable` structs, and property wrappers like `@PBQuery` and `@PBAuthState` keep your
+views in sync — similar to SwiftData's `@Query` but driven by your PocketBase server:
 
+```swift
+@PBQuery(collection: "posts", sort: \Post.created, order: .reverse)
+private var posts: [Post]
+```
 
-> Note: This is a work in progress. The SDK is not yet have 100% feature parity with the [js-sdk](https://github.com/pocketbase/js-sdk) but it's close.
-> Any contributions are welcome!
+The core library has **zero UI framework dependencies** — it works from SwiftUI, UIKit, or a
+headless Swift target.
 
-## Motivation
+## Quick start
 
-Pocketbase is a great framework for quick prototyping and small scale applications. In an ideal world, Pocketbase would generate Swagger/OpenAPI documentation, but currently it doesn't. And there is [no plan](https://github.com/pocketbase/pocketbase/issues/945) to add it in the future. 
+Define a model and provide a `PocketBase` instance to the SwiftUI environment:
 
-This SDK aims to make it easier to use Pocketbase with Swift projects.
+```swift
+import PocketBase
+import SwiftUI
+
+struct Post: PBCollection {
+  let id: String
+  let title: String
+  let created: String
+  let updated: String
+  let collectionId: String
+  let collectionName: String
+}
+
+@main
+struct MyApp: App {
+  @State private var pocketBase = PocketBase(baseURL: "http://127.0.0.1:8090")
+
+  var body: some Scene {
+    WindowGroup {
+      ContentView()
+        .environment(\.pocketBase, pocketBase)
+    }
+  }
+}
+```
+
+Then fetch and display data with `@PBQuery`:
+
+```swift
+struct ContentView: View {
+  @PBQuery(collection: "posts", sort: \Post.created, order: .reverse)
+  private var posts: [Post]
+
+  var body: some View {
+    List(posts) { post in
+      Text(post.title)
+    }
+    .refreshable { $posts.refresh() }
+  }
+}
+```
 
 ## Installation
 
@@ -33,300 +80,230 @@ Add the package to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/drewalth/pocketbase-swift-sdk.git", from: "1.0.0")
+  .package(url: "https://github.com/drewalth/pocketbase-swift-sdk.git", from: "1.0.0")
 ],
 targets: [
-    .target(name: "YourApp", dependencies: [.product(name: "PocketBase", package: "pocketbase-swift-sdk")])
+  .target(name: "YourApp", dependencies: [.product(name: "PocketBase", package: "pocketbase-swift-sdk")])
 ]
 ```
 
+Or in Xcode: **File → Add Package Dependencies...** and search for
+`https://github.com/drewalth/pocketbase-swift-sdk`.
+
 ## Usage
 
-### SwiftUI
+### Data models
 
 ```swift
-// Add the PocketBase instance to the environment
-private struct PB: EnvironmentKey {
-  static let defaultValue = PocketBase(baseURL: "http://127.0.0.1:8090")
+// A model for any PocketBase collection
+struct Bookmark: PBCollection {
+  let id: String
+  let title: String
+  let url: String
+  let created: String
+  let updated: String
+  let collectionId: String
+  let collectionName: String
 }
 
-extension EnvironmentValues {
-  var pocketBase: PocketBase {
-    get {
-      self[PB.self]
-    } set {
-      self[PB.self] = newValue
-    }
-  }
-}
-
-// Access the PocketBase instance in your views
-struct ContentView: View {
-    @Environment(\.pocketBase) var pocketBase
-    @State private var posts: [Post] = []
-
-    var body: some View {
-        List(posts, id: \.id) { post in
-            Text(post.title)
-        }
-        .task {
-            do {
-                let postCollection: Collection<Post> = pocketBase.collection("posts")
-                let postResult = try await postCollection.getList()
-                posts = postResult.items
-            } catch {
-                print(error)
-            }
-        }
-    }
-}
-```
-
-> See the [example project](./example) for a more complete example.
-
-### Data Models
-
-The SDK uses generics to support any user model that conforms to `PBIdentifiableCollection`. You need to define your own User models:
-
-```swift
-// Define your User model
+// For user/auth models, use PBIdentifiableCollection
 struct User: PBIdentifiableCollection {
-    let id: String
-    let email: String
-    let username: String?
-    let name: String?
-    let avatar: String?
-    let verified: Bool
-    let created: String
-    let updated: String
-    let collectionId: String
-    let collectionName: String
-    // Add any additional fields your PocketBase user collection has
+  let id: String
+  let email: String
+  let name: String?
+  let verified: Bool
+  let created: String
+  let updated: String
+  let collectionId: String
+  let collectionName: String
 }
 ```
 
-### Authentication
-
-The SDK provides comprehensive authentication functionality with generic support:
-
-#### User Authentication
-
-```swift
-// Sign up a new user
-let createUserDto = CreateUser(
-    email: "user@example.com",
-    name: "Test User",
-    password: "password123",
-    passwordConfirm: "password123")
-let authResult = try await pb.signUp(dto: createUserDto, userType: User.self)
-
-// Sign in with email/username and password
-let authResult = try await pb.authWithPassword(
-    email: "user@example.com",
-    password: "password123",
-    userType: User.self
-)
-
-// Refresh authentication token
-let refreshResult = try await pb.authRefresh(userType: User.self)
-
-// Check authentication status
-if pb.isAuthenticated {
-    print("User is authenticated")
-    print("User ID: \(pb.currentUserId ?? "Unknown")")
-}
-
-// Sign out
-pb.signOut()
-```
-
-#### Password Reset and Email Verification
-
-```swift
-// Request password reset
-try await pb.requestPasswordReset(email: "user@example.com")
-
-// Confirm password reset (with token from email)
-try await pb.confirmPasswordReset(
-    token: "reset_token_from_email",
-    password: "newpassword",
-    passwordConfirm: "newpassword"
-)
-
-// Request email verification
-try await pb.requestVerification(email: "user@example.com")
-
-// Confirm email verification (with token from email)
-try await pb.confirmVerification(token: "verification_token_from_email")
-```
-
-### CRUD Operations
-
-```swift
-let bookmarksCollection = pb.collection("bookmarks")
-
-// Get a single record
-let bookmark = try await bookmarksCollection.getOne(id: "e849z3g13jls740")
-
-// Get a list of records
-let bookmarks = try await bookmarksCollection.getList()
-
-// Create a new record
-let newBookmark = try await bookmarksCollection.create(record: Bookmark(
-    title: "My First Bookmark",
-    url: "https://www.google.com"
-))
-
-// Update a record
-let updatedBookmark = try await bookmarksCollection.update(
-    id: newBookmark.id,
-    record: Bookmark(
-        title: "My Updated Bookmark",
-        url: "https://www.google.com"
-    )
-)
-
-// Delete a record
-try await bookmarksCollection.delete(id: newBookmark.id)
-```
-
-### Expand Functionality
-
-The SDK provides powerful expand functionality to include related data in your queries:
-
-#### Basic Expansion
-
-```swift
-// Expand a single field
-let expandQuery = ExpandQuery("author")
-let posts = try await pb.getList(
-    collection: "posts",
-    model: Post.self,
-    expand: expandQuery
-)
-
-// Expand multiple fields
-let expandQuery = ExpandQuery("author", "category", "tags")
-let posts = try await pb.getList(
-    collection: "posts",
-    model: Post.self,
-    expand: expandQuery
-)
-```
-
-#### Nested Expansion
-
-```swift
-// Expand nested relationships
-let expandQuery = ExpandQuery("author.profile", "category.parent")
-let posts = try await pb.getList(
-    collection: "posts",
-    model: Post.self,
-    expand: expandQuery
-)
-```
-
-#### Builder Pattern
-
-```swift
-// Use the builder pattern for complex expansions
-let expandQuery = ExpandBuilder()
-    .field("author")
-    .field("category")
-    .nested("author.profile")
-    .nested("category.parent")
-    .build()
-
-let posts = try await pb.getList(
-    collection: "posts",
-    model: Post.self,
-    expand: expandQuery
-)
-```
-
-#### Fluent API with Expand
+### CRUD operations
 
 ```swift
 let posts: Collection<Post> = pb.collection("posts")
 
-// Expand with fluent API
-let expandQuery = ExpandQuery("author", "category")
-let result = try await posts.getList(expand: expandQuery)
+// List
+let result = try await posts.getList()
+for post in result.items { /* ... */ }
 
-// Expand on single record
-let post = try await posts.getOne(
-    id: "post-id",
-    expand: ExpandQuery("author.profile")
-)
+// Single
+let post = try await posts.getOne(id: "e849z3g13jls740")
+
+// Create
+let newPost = try await posts.create(record: Post(/* ... */))
+
+// Update
+let updated = try await posts.update(id: newPost.id, record: Post(/* ... */))
+
+// Delete
+try await posts.delete(id: newPost.id)
 ```
 
-#### Conditional Expansion
+All CRUD methods are also available directly on `PocketBase` without creating a `Collection`:
 
 ```swift
-let builder = ExpandBuilder()
-
-if shouldIncludeAuthor {
-    builder.field("author")
-}
-
-if shouldIncludeCategory {
-    builder.field("category")
-}
-
-let expandQuery = builder.build()
-let posts = try await pb.getList(
-    collection: "posts",
-    model: Post.self,
-    expand: expandQuery
-)
+let result = try await pb.getList(collection: "posts", model: Post.self)
 ```
 
-### Realtime
+### Authentication
 
 ```swift
-let realtime = pb.realtime(
-    collection: "bookmarks",
-    record: "*",
-    onConnect: {
-        print("Connected to realtime")
-    },
-    onDisconnect: {
-        print("Disconnected from realtime")
-    },
-    onEvent: { event in
-        print("Received event: \(event.action) for record: \(event.record)")
+// Sign in
+let auth = try await pb.authWithPassword(
+  email: "user@example.com", password: "password", userType: User.self)
+
+// Sign up
+let newUser = try await pb.signUp(
+  dto: CreateUser(email: "...", name: "...", password: "...", passwordConfirm: "..."),
+  userType: User.self)
+
+// Sign out
+pb.signOut()
+
+// Password reset
+try await pb.requestPasswordReset(email: "user@example.com")
+try await pb.confirmPasswordReset(token: "...", password: "...", passwordConfirm: "...")
+```
+
+Tokens are stored in the Keychain and automatically attached to every request. In the simulator, the
+SDK transparently falls back to `UserDefaults`.
+
+#### SwiftUI auth state
+
+```swift
+struct AuthView: View {
+  @PBAuthState private var auth
+
+  var body: some View {
+    if auth.isAuthenticated {
+      Text("Signed in as \(auth.userId ?? "")")
+    } else {
+      LoginFormView()
     }
-)
+  }
+}
+```
+
+### Sorting
+
+```swift
+// Keypath-based
+let posts = try await pb.collection("posts").getList(
+  sort: PBSortQuery(PBSortDescriptor(\Post.created, order: .reverse)))
+
+// Multiple sort fields
+let sort = PBSortQuery(
+  PBSortDescriptor(\Post.category, order: .forward),
+  PBSortDescriptor(\Post.created, order: .reverse))
+```
+
+`@PBQuery` supports keypath sort directly:
+
+```swift
+@PBQuery(collection: "posts", sort: \Post.created, order: .reverse)
+private var posts: [Post]
+```
+
+### Filtering
+
+```swift
+// Type-safe filter builder
+let filter = FiltersQuery()
+  .greaterThan("views", 100)
+  .equals("status", "published")
+
+let result = try await pb.collection("posts").getList(filters: filter)
+
+// Or use the builder pattern
+let filter = FilterBuilder()
+  .greaterThan("views", 100)
+  .equals("status", "published")
+  .build()
+```
+
+Combine filters with `@PBQuery`:
+
+```swift
+@PBQuery(
+  collection: "posts",
+  filter: FiltersQuery().equals("status", "published"),
+  sort: \Post.created, order: .reverse)
+private var publishedPosts: [Post]
+```
+
+### Expanding relations
+
+```swift
+// Expand a single relation
+let posts = try await pb.collection("posts").getList(expand: ExpandQuery("author"))
+
+// Expand nested relations
+let posts = try await pb.collection("posts").getList(expand: ExpandQuery("author.profile"))
+
+// Builder pattern
+let expand = ExpandBuilder()
+  .field("author")
+  .nested("author.profile")
+  .build()
+```
+
+### Realtime (SSE)
+
+```swift
+let realtime = pb.realtime(collection: "bookmarks", onEvent: { (event: RealtimeEvent<Bookmark>) in
+  switch event.action {
+  case .create: print("Created:", event.record.title)
+  case .update: print("Updated:", event.record.title)
+  case .delete: print("Deleted:", event.record.id)
+  }
+})
 
 try await realtime.subscribe()
 
-// Unsubscribe from realtime
+// Later
 realtime.unsubscribe()
 ```
 
-## Data Models
-
-Define your data models by conforming to `PBCollection`:
+Enable realtime on `@PBQuery` to automatically refresh the list when server data changes:
 
 ```swift
-struct Bookmark: PBCollection {
-    let id: String
-    let title: String
-    let url: String
-    let created: String
-    let updated: String
-    let collectionId: String
-    let collectionName: String
+@PBQuery(collection: "posts", sort: \Post.created, order: .reverse, realtime: true)
+private var posts: [Post]
+```
+
+### UIKit
+
+The SDK core has no SwiftUI dependency. Use it from UIKit with async/await:
+
+```swift
+import PocketBase
+import UIKit
+
+final class PostsViewController: UITableViewController {
+  private let pocketBase = PocketBase(baseURL: "http://127.0.0.1:8090")
+  private var posts: [Post] = []
+
+  private func fetch() async {
+    do {
+      let result = try await pocketBase.collection("posts").getList(
+        sort: PBSortQuery(PBSortDescriptor(\Post.created, order: .reverse)))
+      posts = result.items
+      tableView.reloadData()
+    } catch {
+      // handle error
+    }
+  }
 }
 ```
 
-For models that need an `id` property (like User and Admin), use `PBIdentifiableCollection`:
+## Example app
 
-```swift
-struct User: PBIdentifiableCollection {
-    let id: String
-    let email: String
-    // ... other properties
-}
-```
+The [example app](./example) demonstrates the full API surface — including `@PBQuery`,
+`@PBAuthState`, authentication flows, realtime subscriptions, and a UIKit screen — against a local
+PocketBase server. Open it with `cd example && xed .`.
 
+## License
+
+This library is released under the MIT license. See [LICENSE](LICENSE) for details.
